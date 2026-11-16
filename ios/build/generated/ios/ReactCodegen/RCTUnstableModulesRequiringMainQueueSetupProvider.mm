@@ -12,13 +12,7 @@
 +(NSArray<NSString *> *)modules
 {
   return @[
-    @"AccessibilityManager",
-		@"Appearance",
-		@"AppState",
-		@"DeviceInfo",
-		@"PlatformConstants",
-		@"SampleTurboModule",
-		@"StatusBarManager"
+    
   ];
 }
 

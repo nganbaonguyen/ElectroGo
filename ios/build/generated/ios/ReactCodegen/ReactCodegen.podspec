@@ -100,7 +100,7 @@ else
   popd >/dev/null
 fi
 
-export RCT_SCRIPT_RN_DIR="$RCT_SCRIPT_POD_INSTALLATION_ROOT/../node_modules/react-native"
+export RCT_SCRIPT_RN_DIR="$RCT_SCRIPT_POD_INSTALLATION_ROOT/../node_modules/.pnpm/react-native@0.88.1_@babel+core@7.29.13_supports-color@8.1.1__@react-native-community+c_19f75e27967a4e098e78c953f1f154eb/node_modules/react-native"
 export RCT_SCRIPT_APP_PATH="$RCT_SCRIPT_POD_INSTALLATION_ROOT/.."
 export RCT_SCRIPT_OUTPUT_DIR="$RCT_SCRIPT_POD_INSTALLATION_ROOT"
 export RCT_SCRIPT_TYPE="withCodegenDiscovery"

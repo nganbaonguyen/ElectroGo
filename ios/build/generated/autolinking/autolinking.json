@@ -1,20 +1,20 @@
 {
-  "root": "/Users/ngannguyenbao/ElectroGo/ElectroGo",
-  "reactNativePath": "/Users/ngannguyenbao/ElectroGo/ElectroGo/node_modules/react-native",
+  "root": "/Users/ngannguyenbao/ElectroGo",
+  "reactNativePath": "/Users/ngannguyenbao/ElectroGo/node_modules/react-native",
   "reactNativeVersion": "0.88",
   "dependencies": {
     "react-native-safe-area-context": {
-      "root": "/Users/ngannguyenbao/ElectroGo/ElectroGo/node_modules/react-native-safe-area-context",
+      "root": "/Users/ngannguyenbao/ElectroGo/node_modules/react-native-safe-area-context",
       "name": "react-native-safe-area-context",
       "platforms": {
         "ios": {
-          "podspecPath": "/Users/ngannguyenbao/ElectroGo/ElectroGo/node_modules/react-native-safe-area-context/react-native-safe-area-context.podspec",
+          "podspecPath": "/Users/ngannguyenbao/ElectroGo/node_modules/react-native-safe-area-context/react-native-safe-area-context.podspec",
           "version": "5.11.1",
           "configurations": [],
           "scriptPhases": []
         },
         "android": {
-          "sourceDir": "/Users/ngannguyenbao/ElectroGo/ElectroGo/node_modules/react-native-safe-area-context/android",
+          "sourceDir": "/Users/ngannguyenbao/ElectroGo/node_modules/react-native-safe-area-context/android",
           "packageImportPath": "import com.th3rdwave.safeareacontext.SafeAreaContextPackage;",
           "packageInstance": "new SafeAreaContextPackage()",
           "buildTypes": [],
@@ -23,7 +23,7 @@
             "RNCSafeAreaProviderComponentDescriptor",
             "RNCSafeAreaViewComponentDescriptor"
           ],
-          "cmakeListsPath": "/Users/ngannguyenbao/ElectroGo/ElectroGo/node_modules/react-native-safe-area-context/android/src/main/jni/CMakeLists.txt",
+          "cmakeListsPath": "/Users/ngannguyenbao/ElectroGo/node_modules/react-native-safe-area-context/android/src/main/jni/CMakeLists.txt",
           "cxxModuleCMakeListsModuleName": null,
           "cxxModuleCMakeListsPath": null,
           "cxxModuleHeaderName": null,
@@ -232,7 +232,7 @@
         {
           "name": "--path <path>",
           "description": "Path to the React Native project root.",
-          "default": "/Users/ngannguyenbao/ElectroGo/ElectroGo/ios"
+          "default": "/Users/ngannguyenbao/ElectroGo/ios"
         },
         {
           "name": "--platform <string>",
@@ -289,7 +289,7 @@
         {
           "name": "--terminal <string>",
           "description": "Launches the Metro Bundler in a new window using the specified terminal path.",
-          "default": "Apple_Terminal"
+          "default": "vscode"
         },
         {
           "name": "--binary-path <string>",
@@ -457,7 +457,7 @@
         {
           "name": "--terminal <string>",
           "description": "Launches the Metro Bundler in a new window using the specified terminal path.",
-          "default": "Apple_Terminal"
+          "default": "vscode"
         },
         {
           "name": "--appId <string>",
@@ -532,16 +532,16 @@
   "assets": [],
   "project": {
     "ios": {
-      "sourceDir": "/Users/ngannguyenbao/ElectroGo/ElectroGo/ios",
+      "sourceDir": "/Users/ngannguyenbao/ElectroGo/ios",
       "xcodeProject": {
-        "name": "ElectroGo.xcodeproj",
+        "name": "ElectroGo.xcworkspace",
         "path": ".",
-        "isWorkspace": false
+        "isWorkspace": true
       },
       "assets": []
     },
     "android": {
-      "sourceDir": "/Users/ngannguyenbao/ElectroGo/ElectroGo/android",
+      "sourceDir": "/Users/ngannguyenbao/ElectroGo/android",
       "appName": "app",
       "packageName": "com.electrogo",
       "applicationId": "com.electrogo",

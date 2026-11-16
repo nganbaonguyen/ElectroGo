@@ -2168,7 +2168,7 @@ SPEC CHECKSUMS:
   React-viewtransitionnativemodule: 72d05297a563e466e9609605a8a136f7331ed92d
   React-webperformancenativemodule: 7493223544508476409185f7d529130f83e93391
   ReactAppDependencyProvider: 8f58674985de7d21f6156d5c9bff1e41a119a82b
-  ReactCodegen: 944c3b82977d2940d595087c48c280764515950a
+  ReactCodegen: 359ca77beff08d29bf3fc1b9d617b3a910a9b8c8
   ReactCommon: b815fa26d04751d8b1a076de6888634fb34fb44e
   ReactNativeDependencies: a5164c3ebbe90d992022b5d9cbabbf770a6d7d05
   SocketRocket: d57b1af80c029e12a75cd9b218287c67381e4593
@@ -2176,4 +2176,4 @@ SPEC CHECKSUMS:
 
 PODFILE CHECKSUM: 4bdfbc246989e8f2cc45c3e72dca80cc688c2a3e
 
-COCOAPODS: 1.15.2
+COCOAPODS: 1.16.2
