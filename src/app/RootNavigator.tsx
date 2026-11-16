@@ -1,4 +1,4 @@
-import React, {useCallback, useState} from 'react';
+import React, {ComponentType, useCallback, useEffect, useState} from 'react';
 import {
   Alert,
   Pressable,
@@ -8,20 +8,16 @@ import {
   View,
 } from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import SaleApp from '@electrogo/sale';
-import WorkApp from '@electrogo/work';
-import {HomeScreen, MiniAppKey} from '../features/home';
+import {HomeScreen, MINI_APPS, MiniAppKey} from '../features/home';
 import {SplashScreen} from '../features/splash';
+import MiniAppErrorBoundary from '../shared/components/MiniAppErrorBoundary';
+import MiniAppErrorView from '../shared/components/MiniAppErrorView';
+import MiniAppLoading from '../shared/components/MiniAppLoading';
 import PlaceholderScreen from '../shared/components/PlaceholderScreen';
 import {colors, spacing} from '../shared/theme';
 import BottomTabBar from './BottomTabBar';
+import {loadMiniApp} from './remotes';
 import {TABS, TabKey} from './tabs';
-
-/** Bảng đăng ký: khóa mini app -> component gốc của mini app đó. */
-const MINI_APP_COMPONENTS: Record<MiniAppKey, React.ComponentType> = {
-  work: WorkApp,
-  sale: SaleApp,
-};
 
 // Dữ liệu mẫu; sau này lấy từ API/store (feature notifications).
 const MOCK_BADGES: Partial<Record<TabKey, number>> = {notifications: 12};
@@ -41,16 +37,7 @@ export default function RootNavigator() {
 
   // Mini app chiếm toàn màn hình, không hiện thanh tab.
   if (miniApp !== null) {
-    const MiniApp = MINI_APP_COMPONENTS[miniApp];
-    return (
-      <View style={[styles.miniApp, {paddingTop: insets.top}]}>
-        <StatusBar barStyle="dark-content" />
-        <Pressable style={styles.back} onPress={() => setMiniApp(null)}>
-          <Text style={styles.backText}>‹ Trang chủ</Text>
-        </Pressable>
-        <MiniApp />
-      </View>
-    );
+    return <MiniAppHost miniApp={miniApp} onClose={() => setMiniApp(null)} topInset={insets.top} />;
   }
 
   const current = TABS.find(t => t.key === tab)!;
@@ -85,3 +72,75 @@ const styles = StyleSheet.create({
   back: {paddingHorizontal: spacing.xl, paddingVertical: spacing.md},
   backText: {fontSize: 16, color: colors.primaryLight},
 });
+
+/** Thời gian tối thiểu hiện màn loading khi tải/thử lại mini app. */
+const MIN_LOADING_MS = 900;
+
+type MiniAppHostProps = {miniApp: MiniAppKey; onClose: () => void; topInset: number};
+
+type LoadState =
+  | {status: 'loading'}
+  | {status: 'ready'; Component: ComponentType}
+  | {status: 'error'; message: string};
+
+/**
+ * Khung chứa mini app nạp động. Trạng thái tải do chính component này quản lý:
+ * loading (logo) -> ready (hiện mini app) hoặc error (màn trắng có nút Thử lại / Đóng).
+ * Không dùng lazy/Suspense để lỗi tải không bị ném trong lúc render (tránh màn đỏ ở chế độ dev).
+ */
+function MiniAppHost({miniApp, onClose, topInset}: MiniAppHostProps) {
+  const [attempt, setAttempt] = useState(0);
+  const [state, setState] = useState<LoadState>({status: 'loading'});
+  const name = MINI_APPS.find(a => a.key === miniApp)?.label ?? miniApp;
+
+  useEffect(() => {
+    let cancelled = false;
+    setState({status: 'loading'});
+
+    // Giữ màn loading (logo) tối thiểu MIN_LOADING_MS, kể cả khi kết quả (nhất là lỗi) về gần như tức thì,
+    // để người dùng thấy rõ app đang thử lại thay vì thấy màn hình chớp.
+    const minWait = new Promise<void>(resolve => setTimeout(resolve, MIN_LOADING_MS));
+    const result = loadMiniApp(miniApp).then(
+      (Component): LoadState => ({status: 'ready', Component}),
+      (e): LoadState => ({
+        status: 'error',
+        message: e instanceof Error ? e.message : 'Lỗi không xác định',
+      }),
+    );
+
+    Promise.all([result, minWait]).then(([next]) => {
+      if (!cancelled) {
+        setState(next);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [miniApp, attempt]);
+
+  return (
+    <View style={[styles.miniApp, {paddingTop: topInset}]}>
+      <StatusBar barStyle="dark-content" />
+      <Pressable style={styles.back} onPress={onClose}>
+        <Text style={styles.backText}>‹ Trang chủ</Text>
+      </Pressable>
+      {state.status === 'loading' && <MiniAppLoading name={name} />}
+      {state.status === 'error' && (
+        <MiniAppErrorView
+          name={name}
+          message={state.message}
+          onRetry={() => {
+            setState({status: 'loading'}); // hiện loading ngay khi bấm, không chờ effect chạy
+            setAttempt(a => a + 1);
+          }}
+          onClose={onClose}
+        />
+      )}
+      {state.status === 'ready' && (
+        <MiniAppErrorBoundary name={name} onClose={onClose}>
+          <state.Component />
+        </MiniAppErrorBoundary>
+      )}
+    </View>
+  );
+}

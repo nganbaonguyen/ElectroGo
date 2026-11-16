@@ -16,3 +16,9 @@ android/app/build/
 # Temporary files
 .DS_Store
 *.log
+
+# Bản clone riêng của mini app (pnpm subs), không commit vào host
+/sub/
+
+# Output build của Re.Pack (rspack.config.mjs)
+/build/

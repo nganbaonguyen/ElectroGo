@@ -1,6 +1,31 @@
 PODS:
   - boost (1.84.0):
     - ReactNativeDependencies
+  - callstack-repack (5.4.3):
+    - hermes-engine
+    - JWTDecode (~> 3.0.0)
+    - RCTRequired
+    - RCTTypeSafety
+    - React-bridging
+    - React-Core
+    - React-Core-prebuilt
+    - React-cxxstableapi
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - SwiftyRSA (~> 1.7)
+    - Yoga
   - DoubleConversion (1.1.6):
     - ReactNativeDependencies
   - fast_float (8.0.0):
@@ -14,6 +39,7 @@ PODS:
   - hermes-engine (260318099.0.5):
     - hermes-engine/Pre-built (= 260318099.0.5)
   - hermes-engine/Pre-built (260318099.0.5)
+  - JWTDecode (3.0.1)
   - RCT-Folly (2024.11.18.00):
     - RCT-Folly/Default (= 2024.11.18.00)
     - ReactNativeDependencies
@@ -1816,11 +1842,15 @@ PODS:
   - ReactNativeDependencies (0.88.1)
   - SocketRocket (0.7.1):
     - ReactNativeDependencies
+  - SwiftyRSA (1.7.0):
+    - SwiftyRSA/ObjC (= 1.7.0)
+  - SwiftyRSA/ObjC (1.7.0)
   - Yoga (0.0.0):
     - React-Core-prebuilt
 
 DEPENDENCIES:
   - boost (from `build/rndeps-facades/boost`)
+  - "callstack-repack (from `../node_modules/@callstack/repack`)"
   - DoubleConversion (from `build/rndeps-facades/DoubleConversion`)
   - fast_float (from `build/rndeps-facades/fast_float`)
   - FBLazyVector (from `build/rncore-facades/FBLazyVector`)
@@ -1910,9 +1940,16 @@ DEPENDENCIES:
   - SocketRocket (from `build/rndeps-facades/SocketRocket`)
   - Yoga (from `build/rncore-facades/Yoga`)
 
+SPEC REPOS:
+  trunk:
+    - JWTDecode
+    - SwiftyRSA
+
 EXTERNAL SOURCES:
   boost:
     :path: build/rndeps-facades/boost
+  callstack-repack:
+    :path: "../node_modules/@callstack/repack"
   DoubleConversion:
     :path: build/rndeps-facades/DoubleConversion
   fast_float:
@@ -2091,12 +2128,14 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   boost: 2a9d6e1d9873337543f08d9dbc007b288f4e113b
+  callstack-repack: 482cf3c2be788f3ba4c63858e369d927edb9b540
   DoubleConversion: e85e4faac763226bfd1cc4c6a98d8355149b27a5
   fast_float: 908e5ee35999f3d91af4b962ac951acac591866c
   FBLazyVector: 67f73ac20aa6866d00d4319696528211c75a37f8
   fmt: c7776a2a4b1d7ce88b809a1e4d1f7add0f2369df
   glog: b4427c3119645da795ff09985ba9da909c940c96
   hermes-engine: 79484fc4e58f328d01b9339ef899ca633d3702ee
+  JWTDecode: 2eed97c2fa46ccaf3049a787004eedf0be474a87
   RCT-Folly: d173e541eeb78cad5c81011c1bbf62d5b86b9778
   RCTDeprecation: b4eda76fedc7aca9f3a1f30b82c9d9e06a433602
   RCTRequired: 805a643b94e980f1ea1f9749908893cb2cf57cec
@@ -2177,6 +2216,7 @@ SPEC CHECKSUMS:
   ReactCommon: b815fa26d04751d8b1a076de6888634fb34fb44e
   ReactNativeDependencies: a5164c3ebbe90d992022b5d9cbabbf770a6d7d05
   SocketRocket: d57b1af80c029e12a75cd9b218287c67381e4593
+  SwiftyRSA: 8c6dd1ea7db1b8dc4fb517a202f88bb1354bc2c6
   Yoga: 58b502c52b14ad3c4468805d461fc37d275c2a42
 
 PODFILE CHECKSUM: 4bdfbc246989e8f2cc45c3e72dca80cc688c2a3e

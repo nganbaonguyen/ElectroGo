@@ -55,6 +55,31 @@
           "isPureCxxDependency": false
         }
       }
+    },
+    "@callstack/repack": {
+      "root": "/Users/ngannguyenbao/ElectroGo/node_modules/@callstack/repack",
+      "name": "@callstack/repack",
+      "platforms": {
+        "ios": {
+          "podspecPath": "/Users/ngannguyenbao/ElectroGo/node_modules/@callstack/repack/callstack-repack.podspec",
+          "version": "5.4.3",
+          "configurations": [],
+          "scriptPhases": []
+        },
+        "android": {
+          "sourceDir": "/Users/ngannguyenbao/ElectroGo/node_modules/@callstack/repack/android",
+          "packageImportPath": "import com.callstack.repack.ScriptManagerPackage;",
+          "packageInstance": "new ScriptManagerPackage()",
+          "buildTypes": [],
+          "libraryName": "RNScriptManagerSpec",
+          "componentDescriptors": [],
+          "cmakeListsPath": "/Users/ngannguyenbao/ElectroGo/node_modules/@callstack/repack/android/build/generated/source/codegen/jni/CMakeLists.txt",
+          "cxxModuleCMakeListsModuleName": null,
+          "cxxModuleCMakeListsPath": null,
+          "cxxModuleHeaderName": null,
+          "isPureCxxDependency": false
+        }
+      }
     }
   },
   "commands": [
@@ -72,12 +97,8 @@
           "default": "ios"
         },
         {
-          "name": "--transformer <string>",
-          "description": "Specify a custom transformer to be used"
-        },
-        {
           "name": "--dev [boolean]",
-          "description": "If false, warnings are disabled and the bundle is minified",
+          "description": "Enables development warnings and disables production optimisations",
           "default": true
         },
         {
@@ -89,57 +110,52 @@
           "description": "File name where to store the resulting bundle, ex. /tmp/groups.bundle"
         },
         {
-          "name": "--bundle-encoding <string>",
-          "description": "Encoding the bundle should be written in (https://nodejs.org/api/buffer.html#buffer_buffer).",
-          "default": "utf8"
-        },
-        {
-          "name": "--max-workers <number>",
-          "description": "Specifies the maximum number of workers the worker-pool will spawn for transforming files. This defaults to the number of the cores available on your machine."
-        },
-        {
           "name": "--sourcemap-output <string>",
           "description": "File name where to store the sourcemap file for resulting bundle, ex. /tmp/groups.map"
-        },
-        {
-          "name": "--sourcemap-sources-root <string>",
-          "description": "Path to make sourcemap's sources entries relative to, ex. /root/dir"
-        },
-        {
-          "name": "--sourcemap-use-absolute-path",
-          "description": "Report SourceMapURL using its full path",
-          "default": false
         },
         {
           "name": "--assets-dest <string>",
           "description": "Directory name where to store assets referenced in the bundle"
         },
         {
-          "name": "--unstable-transform-profile <string>",
-          "description": "Experimental, transform JS for a specific JS engine. Currently supported: hermes, hermes-canary, default",
-          "default": "default"
-        },
-        {
-          "name": "--asset-catalog-dest [string]",
-          "description": "Path where to create an iOS Asset Catalog for images"
-        },
-        {
           "name": "--reset-cache",
-          "description": "Removes cached files",
-          "default": false
+          "description": "Resets the transformation cache"
         },
         {
-          "name": "--read-global-cache",
-          "description": "Try to fetch transformed JS code from the global cache, if configured.",
-          "default": false
+          "name": "--config-cmd",
+          "description": "(unsupported) Command to generate a JSON project config"
         },
         {
-          "name": "--config <string>",
-          "description": "Path to the CLI configuration file"
+          "name": "--json <statsFile>",
+          "description": "Stores stats in a file."
         },
         {
-          "name": "--resolver-option <string...>",
-          "description": "Custom resolver options of the form key=value. URL-encoded. May be specified multiple times."
+          "name": "--stats <preset>",
+          "description": "It instructs Webpack on how to treat the stats:\n'errors-only'  - only output when errors happen\n'errors-warnings' - only output errors and warnings happen\n'minimal' - only output when errors or new compilation happen\n'none' - output nothing\n'normal' - standard output\n'verbose' - output everything\n'detailed' - output everything except chunkModules and chunkRootModules\n'summary' - output webpack version, warnings count and errors count"
+        },
+        {
+          "name": "--verbose",
+          "description": "Enables verbose logging"
+        },
+        {
+          "name": "--watch",
+          "description": "Watch for file changes"
+        },
+        {
+          "name": "--max-workers <number>",
+          "description": "(Rspack only) The maximum number of workers to use for transformation parallelization "
+        },
+        {
+          "name": "--config <path>",
+          "description": "Path to a bundler config file, e.g webpack.config.js"
+        },
+        {
+          "name": "--webpackConfig <path>",
+          "description": "[DEPRECATED] Path to a bundler config file, e.g webpack.config.js. Please use --config instead."
+        },
+        {
+          "name": "--bundler <string>",
+          "description": "Bundler engine to use: \"rspack\" or \"webpack\". If not specified, auto-detected from config filename."
         }
       ]
     },
@@ -148,43 +164,13 @@
       "description": "Start the React Native development server.",
       "options": [
         {
-          "name": "--port <number>"
+          "name": "--port <number>",
+          "description": "The port number that runs the server on"
         },
         {
           "name": "--host <string>",
+          "description": "Set the server host",
           "default": ""
-        },
-        {
-          "name": "--projectRoot <path>",
-          "description": "Path to a custom project root"
-        },
-        {
-          "name": "--watchFolders <list>",
-          "description": "Specify any additional folders to be added to the watch list"
-        },
-        {
-          "name": "--assetPlugins <list>",
-          "description": "Specify any additional asset plugins to be used by the packager by full filepath"
-        },
-        {
-          "name": "--sourceExts <list>",
-          "description": "Specify any additional source extensions to be used by the packager"
-        },
-        {
-          "name": "--max-workers <number>",
-          "description": "Specifies the maximum number of workers the worker-pool will spawn for transforming files. This defaults to the number of the cores available on your machine."
-        },
-        {
-          "name": "--transformer <string>",
-          "description": "Specify a custom transformer to be used"
-        },
-        {
-          "name": "--reset-cache, --resetCache",
-          "description": "Removes cached files"
-        },
-        {
-          "name": "--custom-log-reporter-path, --customLogReporterPath <string>",
-          "description": "Path to a JavaScript file that exports a log reporter as a replacement for TerminalReporter"
         },
         {
           "name": "--https",
@@ -199,17 +185,52 @@
           "description": "Path to custom SSL cert"
         },
         {
-          "name": "--config <string>",
-          "description": "Path to the CLI configuration file"
-        },
-        {
           "name": "--no-interactive",
           "description": "Disables interactive mode"
         },
         {
-          "name": "--client-logs",
-          "description": "[Deprecated] Enable plain text JavaScript log streaming for all connected apps. This feature is deprecated and will be removed in future.",
-          "default": false
+          "name": "--reset-cache, --resetCache",
+          "description": "Resets the transformation cache"
+        },
+        {
+          "name": "--json",
+          "description": "Log all messages to the console/stdout in JSON format"
+        },
+        {
+          "name": "--log-file <path>",
+          "description": "Enables file logging to specified file"
+        },
+        {
+          "name": "--log-requests",
+          "description": "Enables logging of all requests to the server"
+        },
+        {
+          "name": "--platform <string>",
+          "description": "Run the dev server for the specified platform only. By default, the dev server will bundle for all platforms."
+        },
+        {
+          "name": "--no-reverse-port",
+          "description": "Disables running ADB reverse automatically when bundling for Android"
+        },
+        {
+          "name": "--verbose",
+          "description": "Enables verbose logging"
+        },
+        {
+          "name": "--max-workers <number>",
+          "description": "(Rspack only) The maximum number of workers to use for transformation parallelization "
+        },
+        {
+          "name": "--config <path>",
+          "description": "Path to a bundler config file, e.g webpack.config.js"
+        },
+        {
+          "name": "--webpackConfig <path>",
+          "description": "[DEPRECATED] Path to a bundler config file, e.g webpack.config.js. Please use --config instead."
+        },
+        {
+          "name": "--bundler <string>",
+          "description": "Bundler engine to use: \"rspack\" or \"webpack\". If not specified, auto-detected from config filename."
         }
       ]
     },
@@ -543,6 +564,157 @@
         {
           "name": "-i --interactive",
           "description": "Explicitly select build type and flavour to use before running a build"
+        }
+      ]
+    },
+    {
+      "name": "webpack-bundle",
+      "description": "Build the bundle for the provided JavaScript entry file.",
+      "options": [
+        {
+          "name": "--entry-file <path>",
+          "description": "Path to the root JS file, either absolute or relative to JS root"
+        },
+        {
+          "name": "--platform <string>",
+          "description": "Either \"ios\" or \"android\"",
+          "default": "ios"
+        },
+        {
+          "name": "--dev [boolean]",
+          "description": "Enables development warnings and disables production optimisations",
+          "default": true
+        },
+        {
+          "name": "--minify [boolean]",
+          "description": "Allows overriding whether bundle is minified. This defaults to false if dev is true, and true if dev is false. Disabling minification can be useful for speeding up production builds for testing purposes."
+        },
+        {
+          "name": "--bundle-output <string>",
+          "description": "File name where to store the resulting bundle, ex. /tmp/groups.bundle"
+        },
+        {
+          "name": "--sourcemap-output <string>",
+          "description": "File name where to store the sourcemap file for resulting bundle, ex. /tmp/groups.map"
+        },
+        {
+          "name": "--assets-dest <string>",
+          "description": "Directory name where to store assets referenced in the bundle"
+        },
+        {
+          "name": "--reset-cache",
+          "description": "Resets the transformation cache"
+        },
+        {
+          "name": "--config-cmd",
+          "description": "(unsupported) Command to generate a JSON project config"
+        },
+        {
+          "name": "--json <statsFile>",
+          "description": "Stores stats in a file."
+        },
+        {
+          "name": "--stats <preset>",
+          "description": "It instructs Webpack on how to treat the stats:\n'errors-only'  - only output when errors happen\n'errors-warnings' - only output errors and warnings happen\n'minimal' - only output when errors or new compilation happen\n'none' - output nothing\n'normal' - standard output\n'verbose' - output everything\n'detailed' - output everything except chunkModules and chunkRootModules\n'summary' - output webpack version, warnings count and errors count"
+        },
+        {
+          "name": "--verbose",
+          "description": "Enables verbose logging"
+        },
+        {
+          "name": "--watch",
+          "description": "Watch for file changes"
+        },
+        {
+          "name": "--max-workers <number>",
+          "description": "(Rspack only) The maximum number of workers to use for transformation parallelization "
+        },
+        {
+          "name": "--config <path>",
+          "description": "Path to a bundler config file, e.g webpack.config.js"
+        },
+        {
+          "name": "--webpackConfig <path>",
+          "description": "[DEPRECATED] Path to a bundler config file, e.g webpack.config.js. Please use --config instead."
+        },
+        {
+          "name": "--bundler <string>",
+          "description": "Bundler engine to use: \"rspack\" or \"webpack\". If not specified, auto-detected from config filename."
+        }
+      ]
+    },
+    {
+      "name": "webpack-start",
+      "description": "Start the React Native development server.",
+      "options": [
+        {
+          "name": "--port <number>",
+          "description": "The port number that runs the server on"
+        },
+        {
+          "name": "--host <string>",
+          "description": "Set the server host",
+          "default": ""
+        },
+        {
+          "name": "--https",
+          "description": "Enables https connections to the server"
+        },
+        {
+          "name": "--key <path>",
+          "description": "Path to custom SSL key"
+        },
+        {
+          "name": "--cert <path>",
+          "description": "Path to custom SSL cert"
+        },
+        {
+          "name": "--no-interactive",
+          "description": "Disables interactive mode"
+        },
+        {
+          "name": "--reset-cache, --resetCache",
+          "description": "Resets the transformation cache"
+        },
+        {
+          "name": "--json",
+          "description": "Log all messages to the console/stdout in JSON format"
+        },
+        {
+          "name": "--log-file <path>",
+          "description": "Enables file logging to specified file"
+        },
+        {
+          "name": "--log-requests",
+          "description": "Enables logging of all requests to the server"
+        },
+        {
+          "name": "--platform <string>",
+          "description": "Run the dev server for the specified platform only. By default, the dev server will bundle for all platforms."
+        },
+        {
+          "name": "--no-reverse-port",
+          "description": "Disables running ADB reverse automatically when bundling for Android"
+        },
+        {
+          "name": "--verbose",
+          "description": "Enables verbose logging"
+        },
+        {
+          "name": "--max-workers <number>",
+          "description": "(Rspack only) The maximum number of workers to use for transformation parallelization "
+        },
+        {
+          "name": "--config <path>",
+          "description": "Path to a bundler config file, e.g webpack.config.js"
+        },
+        {
+          "name": "--webpackConfig <path>",
+          "description": "[DEPRECATED] Path to a bundler config file, e.g webpack.config.js. Please use --config instead."
+        },
+        {
+          "name": "--bundler <string>",
+          "description": "Bundler engine to use: \"rspack\" or \"webpack\". If not specified, auto-detected from config filename."
         }
       ]
     }

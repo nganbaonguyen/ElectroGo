@@ -31,6 +31,40 @@ ElectroGo/                      (root = host, giữ nguyên app main)
     └── shared/                 (tùy chọn: UI kit, auth, API client)
 ```
 
+## Host nạp mini app như thế nào (quan trọng)
+
+**Kiến trúc: Re.Pack (Rspack) + Module Federation v2.** Mini app là **remote** chạy server riêng; host chỉ biết địa chỉ và nạp **động lúc chạy** khi người dùng bấm ô trên Home. Host **không** import mã nguồn mini app và không phụ thuộc `@electrogo/*`. Dự án không còn dùng Metro để chạy (giữ `metro.config.js` mặc định).
+
+| # | Việc | Ở đâu |
+|---|---|---|
+| 1 | Khai báo địa chỉ remote (dev: `http://localhost:<cổng>/<platform>/mf-manifest.json`; Android emulator dùng `10.0.2.2`) | `rspack.config.mjs` của host, biến `REMOTES` (work 9001, sale 9002). Production: đặt `WORK_REMOTE_URL`, `SALE_REMOTE_URL` |
+| 2 | Khai báo kiểu cho module nạp động | `src/types/remotes.d.ts` (`declare module 'work/App'`) |
+| 3 | Bảng nạp động + kiểm tra kết nối trước khi nạp | `src/app/remotes.ts`: `LOADERS` (`ensureReachable` rồi `import('work/App')`), hàm `loadMiniApp(key)` trả `Promise<ComponentType>` |
+| 4 | Hiển thị lúc bấm ô | `src/app/RootNavigator.tsx`, `MiniAppHost`: tự quản lý trạng thái loading (vòng xoay thường) -> ready (mini app, bọc `MiniAppErrorBoundary`) hoặc error (`MiniAppErrorView` trắng: nút Thử lại / Đóng). **Không dùng `lazy`/`Suspense`** để lỗi tải không bị ném lúc render (sẽ bật màn đỏ LogBox ở dev) |
+| 5 | Phía mini app: expose component gốc | `rspack.config.mjs` của package: `exposes: {'./App': './src/index.tsx'}`, `name` trùng tên remote, `filename: '<tên>.container.js.bundle'` |
+
+Quy tắc bắt buộc:
+- `react`, `react-native`, `react-native-safe-area-context` là **singleton**: host khai báo `eager: true`, remote khai báo `import: false` (luôn dùng bản của host, không đóng gói bản dự phòng).
+- `__REMOTE_MANIFESTS__` (địa chỉ manifest) do `DefinePlugin` trong `rspack.config.mjs` chèn lúc build. Sửa `rspack.config.mjs` thì **phải khởi động lại** `pnpm start:dev`; không có biến này thì bước kiểm tra kết nối tự bỏ qua.
+- Cổng 8081 chỉ được một server: dừng Metro cũ trước khi chạy `pnpm start:dev`.
+- Mọi `rspack.config.mjs` phải dùng `Repack.getResolveOptions({enablePackageExports: true})`; thiếu thì Module Federation báo `Module not found` ở các subpath như `@module-federation/runtime/helpers`.
+- Container của remote phải có `filename` riêng, khác `index.bundle`, nếu không báo `Multiple assets emit different content to the same filename`.
+- Thư viện **native** mới chỉ cài ở host (cần `pod install` và build lại app). Thư viện JS thuần chỉ một mini app dùng thì mini app tự đóng gói.
+- `react-native.config.js` của host chứa lệnh Re.Pack: `react-native start` và `react-native bundle` chạy Rspack.
+
+Luồng chạy khi người dùng bấm một ô trên Home:
+
+```
+Bấm ô (HomeScreen, key = 'work')
+  -> RootNavigator: MiniAppHost (hiện MiniAppLoading: vòng xoay thường, không logo)
+  -> loadMiniApp('work'): ensureReachable (thử gọi mf-manifest.json, tối đa 4 giây) rồi import('work/App')
+  -> runtime Module Federation đọc http://localhost:9001/<platform>/mf-manifest.json
+  -> tải work.container.js.bundle và chunk __federation_expose_App
+  -> packages/electro-go-work/src/index.tsx (export default WorkApp) hiển thị
+```
+
+Thêm mini app mới: thêm vào `REMOTES` (host), `src/types/remotes.d.ts`, `src/app/remotes.ts`, khóa trong `MiniAppKey` và dòng trong `data/miniApps.ts` của feature home, rồi dựng package theo skill `add-mini-app`.
+
 ## Cấu trúc source của host (feature-based)
 
 Code host nằm trong `src/`, chia theo **tính năng** thay vì theo loại file. Mỗi feature tự chứa màn hình, component, dữ liệu và kiểu của nó.
@@ -59,90 +93,94 @@ Quy ước:
 - Không gõ màu/số trực tiếp trong component; lấy từ `src/shared/theme`.
 - Thêm mini app lên Home: thêm khóa vào `MiniAppKey` (`types.ts`), một dòng vào `data/miniApps.ts`, và đăng ký component trong `RootNavigator.tsx`.
 
+## Chuẩn cấu trúc của một mini app
+
+Mỗi mini app (`electro-go-work`, `electro-go-sale`) dùng đúng một khung. Chi tiết nằm trong `README.md` của từng repo; mini app mới phải theo khung này (xem skill `add-mini-app`).
+
+```
+src/
+├── index.tsx              export default component gốc + export manifest (host chỉ import từ đây)
+├── manifest.ts            hồ sơ: id, name, icon, version
+├── app/
+│   ├── <Tên>App.tsx       ErrorBoundary + MiniNavigator
+│   └── navigation/MiniNavigator.tsx   ngăn xếp màn hình nội bộ (Route, TITLES)
+├── features/<feature>/    screens/ components/ hooks/ services/ data/ types.ts index.ts
+├── services/api/          httpClient.ts (timeout, ApiError), ApiError.ts
+├── config/env.ts          apiBaseUrl, timeoutMs, useMock
+├── assets/                images/ (khai báo ở images/index.ts), icons.ts (tên icon Ionicons)
+└── shared/                theme.ts, components/ (ScreenHeader, StateView, ErrorBoundary),
+                           hooks/useAsync.ts, navigation/useStack.ts, utils/
+```
+
+Quy ước bắt buộc:
+- **Luồng dữ liệu một chiều:** screen -> hook -> service -> (mock | http). Màn hình không gọi `http` trực tiếp; service là nơi duy nhất biết dữ liệu từ mock hay API (chuyển bằng `config.useMock`).
+- Điều hướng nội bộ dùng `useStack` (không cần thư viện). Thêm màn: thêm vào `Route` và `TITLES` trong `MiniNavigator.tsx`. Nút Back Android tự quay về màn trước.
+- Mỗi feature có `index.ts` là cổng công khai; feature chỉ import feature khác qua cổng này. Code dùng từ hai feature trở lên chuyển vào `shared/`.
+- Không gõ màu/số trong component (lấy từ `shared/theme.ts`), không `require` ảnh trực tiếp (dùng `assets/images`), không gõ tên icon rải rác (dùng `assets/icons.ts`).
+- Màn hình xử lý đủ 3 trạng thái dữ liệu qua `useAsync` + `StateView`: đang tải, lỗi (có Thử lại), sẵn sàng.
+- Mini app là repo riêng nên **không import từ host**. `shared/theme.ts` là bản sao theme của host; nếu đổi theme ở host phải đổi cả hai mini app (hoặc tách package `shared` chung).
+- Icon dùng `@react-native-vector-icons/ionicons/static`; khai báo ở `peerDependencies` của package.
+
 ## Quy tắc
 
-- Mỗi mini app export **một component gốc** (kèm navigator riêng). Host chỉ render hoặc đăng ký vào menu:
-  ```tsx
-  import WorkApp from '@electrogo/work';
-  import SaleApp from '@electrogo/sale';
-  ```
-- Thư viện native (navigation, reanimated, safe-area, ...) chỉ cài ở **host**. Mini app khai báo chúng (và `react`, `react-native`) ở `peerDependencies` để tránh trùng hai bản React.
-- Dependency chỉ quản lý chính ở `package.json` của host:
+- Mỗi mini app **expose một component gốc** (`./App`, kèm navigator riêng). Host nạp động, không import mã nguồn.
+- Thư viện **native** (navigation, reanimated, safe-area, vector-icons, ...) chỉ cài ở **host**. Mini app khai báo ở `peerDependencies` (`"*"`) và đưa vào `shared` nếu là singleton bắt buộc (react, react-native, safe-area-context).
+- Dependency:
 
   | Loại dependency | Cài ở đâu |
   |---|---|
-  | Native, hoặc dùng chung nhiều app | Host (`dependencies`), sub package ghi `peerDependencies` (`"*"`) |
+  | Native, hoặc dùng chung nhiều app | Host (`dependencies`), mini app ghi `peerDependencies` (`"*"`) |
   | JS thuần, chỉ một mini app dùng | `package.json` của mini app đó |
-  | Công cụ dev (eslint, jest, typescript, babel) | Root, cài một lần |
+  | Công cụ build/dev (Re.Pack, Rspack, eslint, jest, typescript) | Root host, cài một lần (`node-linker=hoisted` để package ở `packages/` và `sub/` tìm được) |
 
-  Sub package không khai báo gì vẫn chạy được với `node-linker=hoisted`, nhưng ESLint/TS có thể báo lỗi import và khó tách độc lập sau này, nên vẫn khai báo `peerDependencies`.
-- Mini app **không** chứa thư mục `android/` hay `ios/`.
-- Code dùng chung (auth, API client, UI kit) đặt ở `packages/shared`, đừng copy giữa hai app.
-- Màn hình Home của host là lưới các mini app; bấm vào thì điều hướng sang `WorkApp` hoặc `SaleApp`.
+- Mini app **không** chứa thư mục `android/` hay `ios/`; nó mượn app native của host.
+- Mini app **không** import mã của host hoặc của mini app khác. Code dùng chung đặt ở package `shared` (chưa có; hiện mỗi mini app giữ một bản `shared/theme.ts`).
+- Màn hình Home của host là lưới các mini app; bấm vào thì nạp mini app tương ứng (xem mục "Host nạp mini app như thế nào").
 
-## Các bước thiết lập
+## Các bước thiết lập (đã làm, ghi lại để dựng lại)
 
-1. Tạo `pnpm-workspace.yaml` ở root:
-   ```yaml
-   packages:
-     - 'packages/*'
-   ```
-2. Tạo hai thư mục package, mỗi cái có `package.json` riêng (`"main": "src/index.tsx"`, `react` và `react-native` ở `peerDependencies`).
-3. Ở root, thêm dependency nội bộ:
-   ```bash
-   pnpm add @electrogo/work@workspace:* @electrogo/sale@workspace:*
-   ```
-4. `metro.config.js`: thêm `watchFolders` trỏ tới `packages/` để Metro thấy code mini app.
-5. `.npmrc`: thêm `node-linker=hoisted` (Metro hay lỗi với symlink mặc định của pnpm). Sau đó xóa `node_modules` và chạy lại `pnpm install`.
+1. Host: `pnpm add -D @callstack/repack@5.4.3 '@rspack/core@^1.6.0' @swc/helpers` và `pnpm add @module-federation/enhanced@2.9.3` (Re.Pack tương thích Rspack 1.x; không dùng Rspack 2.x).
+2. Host: tạo `react-native.config.js` (`commands: require('@callstack/repack/commands')`) và `rspack.config.mjs` (`ModuleFederationPluginV2` với `remotes`).
+3. Host: scripts `start` và `start:dev` = `react-native start`. Chạy `cd ios && pod install` (thêm module native `callstack-repack`), rồi build lại app.
+4. Mỗi mini app: `rspack.config.mjs` (remote: `exposes`, `filename`, `shared`), `dev/Harness.tsx` + `dev/index.js` (entry khi chạy riêng), scripts `start:module`, `build`.
+5. `.npmrc`: `node-linker=hoisted`.
 
-## metro.config.js dùng làm gì
+## Chạy app (2 terminal)
 
-`metro.config.js` là file cấu hình của Metro (bundler của React Native). Metro gom code JS/TS thành bundle gửi cho app. Mặc định Metro chỉ nhìn thấy file trong thư mục project gốc, nên cần báo thêm `packages/`:
-
-1. `watchFolders`: theo dõi thêm `packages/`, để sửa code mini app thì Fast Refresh vẫn cập nhật.
-2. `resolver.nodeModulesPaths`: chỉ tìm thư viện ở `node_modules` của root, tránh lỗi trùng hai bản React.
-
-```js
-const path = require('path');
-const {getDefaultConfig, mergeConfig} = require('@react-native/metro-config');
-
-const root = __dirname;
-
-const config = {
-  watchFolders: [path.resolve(root, 'packages')],
-  resolver: {
-    nodeModulesPaths: [path.resolve(root, 'node_modules')],
-  },
-};
-
-module.exports = mergeConfig(getDefaultConfig(root), config);
-```
-
-File này đã có sẵn từ template React Native, chỉ cần thêm hai mục trên. Thiếu cấu hình thì hay gặp `Unable to resolve module @electrogo/work`, hoặc sửa mini app mà app không tự cập nhật.
-
-## Chạy app
+Mini app nạp động nên **phải chạy server của từng mini app** song song với host:
 
 ```bash
-pnpm install
-pnpm ios --udid 4DC1F4E3-2A4A-47D5-9E24-7AD54E541D18   # iPhone 14 Pro, iOS 18.0
+# Terminal 1 - host
+pnpm start:dev                       # server Re.Pack cổng 8081
+
+# Terminal 2 - mini app Chấm công
+cd packages/electro-go-work && pnpm start:module     # cổng 9001
+
+# Terminal 3 - mini app Bán hàng (nếu cần)
+cd packages/electro-go-sale && pnpm start:module     # cổng 9002
+
+# Mở app trên máy ảo (build native một lần)
+pnpm ios --udid 4DC1F4E3-2A4A-47D5-9E24-7AD54E541D18
 pnpm android
-pnpm start --reset-cache                                # khi Metro kẹt cache
 ```
 
-Lưu ý: máy có hai simulator cùng tên "iPhone 14 Pro" (iOS 17.2 và 18.0), nên dùng `--udid` thay vì `--simulator` theo tên.
+Bấm ô trên Home: hiện loading (vòng xoay) rồi vào mini app. Nếu server mini app chưa chạy, màn trắng báo "Không tải được ..." với hai nút: Đóng (về Trang chủ) và Thử lại.
+
+`start:module` chạy được cả từ `packages/` lẫn `sub/` (cùng cách host 2 cấp). `pnpm start:module` và `pnpm build` luôn chạy lệnh từ thư mục gốc host.
+
+Build triển khai mini app: `pnpm build` trong package, ra `build/<tên>-<version>.tar` chứa bundle iOS + Android (`mf-manifest.json`, `<tên>.container.js.bundle`, chunk, assets). Đưa lên nơi `*_REMOTE_URL` của host trỏ tới. `pnpm build:src` ra tar mã nguồn.
+
+Khi đổi `rspack.config.mjs` hoặc thêm thư viện native: khởi động lại server và build lại app. Lỗi Metro cũ (`--reset-cache`, `watchFolders`) không còn áp dụng.
 
 ## Khi nào chọn hướng khác
 
 | Nhu cầu | Giải pháp |
 |---|---|
-| Hai app con phát hành/cập nhật độc lập, không qua store | Module Federation với **Re.Pack** (thay Metro bằng Webpack/Rspack, phức tạp hơn nhiều) |
-| Hai app do hai nhóm khác nhau làm, tách repo | Mỗi app một repo, publish thành private npm package rồi host cài vào |
-| Cùng một nhóm, phát hành chung | Monorepo như tài liệu này (mặc định) |
-
-Cấu trúc package ở trên là tiền đề để sau này nâng lên Re.Pack mà không phải viết lại.
+| Hai app con do hai nhóm khác nhau làm, phát hành độc lập | Đang dùng: Re.Pack + Module Federation, mỗi mini app một repo |
+| Chỉ cần gộp mã, không cần nạp động | Monorepo import trực tiếp (`workspace:*`) và Metro; đơn giản hơn nhưng phải phát hành cùng host |
 
 ## Câu hỏi còn mở (cần chủ project xác nhận)
 
-1. Hai app con có cần chạy độc lập (build ra app riêng để test) hay chỉ chạy bên trong super app?
-2. Có cần cập nhật riêng từng app con mà không qua store không?
-3. Có dùng chung đăng nhập và API giữa các app không? Nếu có thì tách thêm `packages/shared`.
+1. Nơi triển khai bundle mini app production (CDN/URL nào) để đặt `WORK_REMOTE_URL`, `SALE_REMOTE_URL`.
+2. Có dùng chung đăng nhập và API giữa các app không? Nếu có thì tách thêm package `shared`.
+3. Có cần ký bundle (code signing của Re.Pack) khi triển khai production không?

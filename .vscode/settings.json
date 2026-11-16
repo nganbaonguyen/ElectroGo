@@ -1,0 +1,8 @@
+{
+  // Hiện panel "NPM Scripts" trong Explorer: bấm ▷ cạnh script (ví dụ "build") để chạy.
+  "npm.enableScriptExplorer": true,
+  // Hiện liên kết "Debug" trên MỌI script trong package.json (mặc định chỉ hiện trên dòng "scripts").
+  "debug.javascript.codelens.npmScripts": "all",
+  // Không liệt kê script của thư viện trong node_modules.
+  "npm.exclude": ["**/node_modules/**", "**/Pods/**", "**/vendor/**"]
+}

@@ -7,11 +7,19 @@ description: Chạy ElectroGo lên iOS simulator (hoặc Android emulator) và x
 
 > **Tóm tắt**
 > - **Skill này là gì:** hướng dẫn chạy app lên iOS simulator / Android emulator và sửa lỗi thường gặp.
-> - **Dùng khi:** muốn chạy app, vừa đổi icon, Metro bị kẹt, hoặc build báo lỗi.
+> - **Dùng khi:** muốn chạy app, vừa đổi icon, mini app không tải được, hoặc build báo lỗi.
 > - **Lệnh nhanh:** `pnpm ios --udid 4DC1F4E3-2A4A-47D5-9E24-7AD54E541D18`
-> - **Skill liên quan:** `electrogo-superapp` (cấu hình Metro).
+> - **Skill liên quan:** `electrogo-superapp` (kiến trúc Re.Pack + Module Federation).
 
 Package manager là **pnpm** (không dùng yarn). Chạy ở thư mục gốc project.
+
+**Kiến trúc nạp động (Re.Pack + Module Federation):** ngoài `pnpm start:dev` ở host, phải chạy server của mini app cần dùng, mỗi cái một terminal:
+```bash
+pnpm start:dev                                        # host, cổng 8081
+cd packages/electro-go-work && pnpm start:module      # Chấm công, cổng 9001
+cd packages/electro-go-sale && pnpm start:module      # Bán hàng, cổng 9002
+```
+Bấm ô trên Home mà thấy "Không tải được ..." nghĩa là server mini app đó chưa chạy. Lần đầu (hoặc sau khi đổi thư viện native/rspack config) phải build lại app bằng `pnpm ios` / `pnpm android`.
 
 ## iOS
 
@@ -37,9 +45,10 @@ Mở Android Emulator từ Android Studio, kiểm tra `adb devices`, rồi `pnpm
 
 | Triệu chứng | Cách xử lý |
 |---|---|
-| Metro kẹt cache, màn hình trắng | `pnpm start --reset-cache` |
-| `Unable to resolve module @electrogo/...` | Kiểm tra `metro.config.js` có `watchFolders` trỏ `packages/`, rồi `pnpm install` lại |
+| Bundler kẹt cache, màn hình trắng | Dừng server, xóa `build/` rồi chạy lại `pnpm start:dev` |
+| `Module not found` ở subpath package (vd `@module-federation/runtime/helpers`) | Thiếu `enablePackageExports: true` trong `Repack.getResolveOptions(...)` của `rspack.config.mjs` |
 | Lỗi module/symlink của pnpm | `.npmrc` cần `node-linker=hoisted`, xóa `node_modules` và `pnpm install` lại |
+| Android emulator không tải được mini app | Host dùng `10.0.2.2` cho Android; thiết bị thật thì đặt `REMOTE_HOST=<IP máy>` khi chạy `pnpm start:dev` |
 | Đổi icon nhưng không thấy đổi | Icon nằm trong bản build: gỡ app khỏi máy ảo rồi build lại |
 | Clone mới thiếu code mini app | `git submodule update --init --recursive` |
 
