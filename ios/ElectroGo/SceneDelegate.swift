@@ -19,7 +19,10 @@ class SceneDelegate: RCTDefaultReactNativeFactoryDelegate, UIWindowSceneDelegate
     dependencyProvider = RCTAppDependencyProvider()
     reactNativeFactory = RCTReactNativeFactory(delegate: self)
     window = UIWindow(windowScene: windowScene)
-    
+    // Nền xanh #0B3AA8 (trùng splash JS) để không lộ nền trắng khi chờ JS vẽ khung hình đầu.
+    let splashBlue = UIColor(red: 11 / 255, green: 58 / 255, blue: 168 / 255, alpha: 1)
+    window?.backgroundColor = splashBlue
+
     #if DEBUG
     let devMenuConfiguration = RCTDevMenuConfiguration(
       devMenuEnabled: true,
@@ -35,7 +38,8 @@ class SceneDelegate: RCTDefaultReactNativeFactoryDelegate, UIWindowSceneDelegate
       connectionOptions: connectionOptions
     )
 
-   
+    // RCTRootView mặc định có nền trắng/hệ thống; đổi sang xanh cho đến khi JS render.
+    window?.rootViewController?.view.backgroundColor = splashBlue
   }
 
   func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {

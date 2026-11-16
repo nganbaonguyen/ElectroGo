@@ -3,6 +3,31 @@
   "reactNativePath": "/Users/ngannguyenbao/ElectroGo/node_modules/react-native",
   "reactNativeVersion": "0.88",
   "dependencies": {
+    "@react-native-vector-icons/ionicons": {
+      "root": "/Users/ngannguyenbao/ElectroGo/node_modules/@react-native-vector-icons/ionicons",
+      "name": "@react-native-vector-icons/ionicons",
+      "platforms": {
+        "ios": {
+          "podspecPath": "/Users/ngannguyenbao/ElectroGo/node_modules/@react-native-vector-icons/ionicons/react-native-vector-icons-ionicons.podspec",
+          "version": "14.0.0",
+          "configurations": [],
+          "scriptPhases": []
+        },
+        "android": {
+          "sourceDir": "/Users/ngannguyenbao/ElectroGo/node_modules/@react-native-vector-icons/ionicons/android",
+          "packageImportPath": "import com.reactnativevectoricons.ionicons.VectorIconsIoniconsPackage;",
+          "packageInstance": "new VectorIconsIoniconsPackage()",
+          "buildTypes": [],
+          "libraryName": "VectorIconsIonicons",
+          "componentDescriptors": [],
+          "cmakeListsPath": "/Users/ngannguyenbao/ElectroGo/node_modules/@react-native-vector-icons/ionicons/android/build/generated/source/codegen/jni/CMakeLists.txt",
+          "cxxModuleCMakeListsModuleName": null,
+          "cxxModuleCMakeListsPath": null,
+          "cxxModuleHeaderName": null,
+          "isPureCxxDependency": false
+        }
+      }
+    },
     "react-native-safe-area-context": {
       "root": "/Users/ngannguyenbao/ElectroGo/node_modules/react-native-safe-area-context",
       "name": "react-native-safe-area-context",
@@ -288,8 +313,7 @@
         },
         {
           "name": "--terminal <string>",
-          "description": "Launches the Metro Bundler in a new window using the specified terminal path.",
-          "default": "vscode"
+          "description": "Launches the Metro Bundler in a new window using the specified terminal path."
         },
         {
           "name": "--binary-path <string>",
@@ -456,8 +480,7 @@
         },
         {
           "name": "--terminal <string>",
-          "description": "Launches the Metro Bundler in a new window using the specified terminal path.",
-          "default": "vscode"
+          "description": "Launches the Metro Bundler in a new window using the specified terminal path."
         },
         {
           "name": "--appId <string>",

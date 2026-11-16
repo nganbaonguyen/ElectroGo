@@ -1,0 +1,6 @@
+[submodule "packages/electro-go-work"]
+	path = packages/electro-go-work
+	url = https://github.com/nganbaonguyen/electro-go-work.git
+[submodule "packages/electro-go-sale"]
+	path = packages/electro-go-sale
+	url = https://github.com/nganbaonguyen/electro-go-sale.git

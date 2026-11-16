@@ -1,0 +1,4 @@
+<resources>
+    <!-- Trùng màu primary (#0B3AA8) của splash JS -->
+    <color name="splash_background">#0B3AA8</color>
+</resources>
