@@ -1,0 +1,18 @@
+
+# Dependencies
+node_modules/
+**/node_modules/
+
+# CocoaPods
+ios/Pods/
+**/Pods/
+
+# Build artifacts
+ios/build/
+android/.gradle/
+android/app/build/
+**/DerivedData/
+
+# Temporary files
+.DS_Store
+*.log

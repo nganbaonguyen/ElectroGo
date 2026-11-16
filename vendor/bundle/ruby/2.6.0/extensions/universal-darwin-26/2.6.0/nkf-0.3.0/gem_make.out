@@ -1,0 +1,16 @@
+current directory: /Users/ngannguyenbao/ElectroGo/ElectroGo/vendor/bundle/ruby/2.6.0/gems/nkf-0.3.0/ext/nkf
+/System/Library/Frameworks/Ruby.framework/Versions/2.6/usr/bin/ruby -I /System/Library/Frameworks/Ruby.framework/Versions/2.6/usr/lib/ruby/2.6.0 -r ./siteconf20261116-20643-wpuw6t.rb extconf.rb
+creating Makefile
+
+current directory: /Users/ngannguyenbao/ElectroGo/ElectroGo/vendor/bundle/ruby/2.6.0/gems/nkf-0.3.0/ext/nkf
+make "DESTDIR=" clean
+
+current directory: /Users/ngannguyenbao/ElectroGo/ElectroGo/vendor/bundle/ruby/2.6.0/gems/nkf-0.3.0/ext/nkf
+make "DESTDIR="
+compiling nkf.c
+linking shared-object nkf.bundle
+ld: warning: search path '/AppleInternal/Library/BuildRoots/4~CV2mugBZ2KNXtntWA9NPM_hM0lS_dtdiwa5BEVo/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.Internal.sdk/usr/local/lib' not found
+
+current directory: /Users/ngannguyenbao/ElectroGo/ElectroGo/vendor/bundle/ruby/2.6.0/gems/nkf-0.3.0/ext/nkf
+make "DESTDIR=" install
+/usr/bin/install -c -m 0755 nkf.bundle ./.gem.20261116-20643-11ccc5v
