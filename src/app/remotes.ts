@@ -3,6 +3,9 @@ import {MiniAppKey} from '../features/home';
 
 const PROBE_TIMEOUT_MS = 4000;
 
+/** Props mà mọi mini app nhận: `initialRoute` là màn hình mở thẳng (rỗng = màn hình trung tâm của mini app). */
+export type MiniAppProps = {initialRoute?: string};
+
 /**
  * Kiểm tra server của mini app có trả lời không TRƯỚC khi nạp.
  * Nếu bỏ qua bước này, khi server chưa chạy thì runtime Module Federation tự ném lỗi nội bộ
@@ -35,7 +38,7 @@ async function ensureReachable(key: MiniAppKey): Promise<void> {
  * Thêm mini app mới: thêm dòng ở đây, khai báo kiểu trong src/types/remotes.d.ts và thêm remote
  * vào rspack.config.mjs.
  */
-const LOADERS: Record<MiniAppKey, () => Promise<{default: ComponentType}>> = {
+const LOADERS: Record<MiniAppKey, () => Promise<{default: ComponentType<MiniAppProps>}>> = {
   work: async () => {
     await ensureReachable('work');
     return import('work/App');
@@ -50,6 +53,6 @@ const LOADERS: Record<MiniAppKey, () => Promise<{default: ComponentType}>> = {
  * Tải mini app và trả về component gốc. Lỗi được trả về dưới dạng Promise bị từ chối
  * (không ném lỗi trong lúc render) để màn hình báo lỗi tự xử lý, không bật màn đỏ của chế độ dev.
  */
-export function loadMiniApp(key: MiniAppKey): Promise<ComponentType> {
+export function loadMiniApp(key: MiniAppKey): Promise<ComponentType<MiniAppProps>> {
   return LOADERS[key]().then(module => module.default);
 }

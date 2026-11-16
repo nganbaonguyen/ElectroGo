@@ -1,5 +1,6 @@
 import React from 'react';
 import {Pressable, StyleSheet, Text, View} from 'react-native';
+import {Ionicons} from '@react-native-vector-icons/ionicons/static';
 import {colors, radius, spacing, typography} from '../../../shared/theme';
 import {MiniAppItem} from '../types';
 
@@ -16,7 +17,7 @@ export default function MiniAppTile({item, onPress}: Props) {
       accessibilityLabel={item.label}
       style={({pressed}) => [styles.card, pressed && styles.pressed]}>
       <View style={styles.iconBox}>
-        <Text style={styles.icon}>{item.icon}</Text>
+        <Ionicons name={item.icon} size={28} color={colors.primaryLight} />
       </View>
       <Text style={styles.label} numberOfLines={1}>
         {item.label}
@@ -36,7 +37,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  icon: {fontSize: 28},
   label: {
     ...typography.caption,
     marginTop: spacing.sm,

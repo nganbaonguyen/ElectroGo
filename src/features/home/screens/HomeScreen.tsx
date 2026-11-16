@@ -5,10 +5,10 @@ import HomeHeader from '../components/HomeHeader';
 import MiniAppGrid from '../components/MiniAppGrid';
 import {MOCK_USER} from '../data/currentUser';
 import {MINI_APPS} from '../data/miniApps';
-import {MiniAppKey} from '../types';
+import {MiniAppItem} from '../types';
 
 type Props = {
-  onOpenMiniApp: (key: MiniAppKey) => void;
+  onOpenMiniApp: (item: MiniAppItem) => void;
 };
 
 export default function HomeScreen({onOpenMiniApp}: Props) {
@@ -19,7 +19,7 @@ export default function HomeScreen({onOpenMiniApp}: Props) {
         <Text style={styles.heading}>Tính năng</Text>
         <MiniAppGrid
           items={MINI_APPS}
-          onPressItem={item => onOpenMiniApp(item.key)}
+          onPressItem={onOpenMiniApp}
         />
       </ScrollView>
     </View>

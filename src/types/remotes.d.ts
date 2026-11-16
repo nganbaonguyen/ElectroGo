@@ -4,12 +4,12 @@
  * và `exposes: {'./App': ...}` trong rspack.config.mjs của từng mini app.
  */
 declare module 'work/App' {
-  const WorkApp: import('react').ComponentType;
+  const WorkApp: import('react').ComponentType<{initialRoute?: string}>;
   export default WorkApp;
 }
 
 declare module 'sale/App' {
-  const SaleApp: import('react').ComponentType;
+  const SaleApp: import('react').ComponentType<{initialRoute?: string}>;
   export default SaleApp;
 }
 

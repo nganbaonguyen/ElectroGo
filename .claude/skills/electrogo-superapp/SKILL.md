@@ -30,6 +30,12 @@ ElectroGo/                      (root = host, giữ nguyên app main)
     │   └── src/index.tsx       export default SaleApp
     └── shared/                 (tùy chọn: UI kit, auth, API client)
 ```
+Metro sẽ:
+1. Theo dõi file trong phạm vi watchFolders.
+2. Phát hiện file thay đổi khi đang chạy Metro ở chế độ watch.
+3. Cập nhật dependency graph.
+4. Bundle lại phần code cần thiết.
+5. Gửi cập nhật đến ứng dụng thông qua Fast Refresh nếu có thể.
 
 ## Host nạp mini app như thế nào (quan trọng)
 
@@ -52,18 +58,107 @@ Quy tắc bắt buộc:
 - Thư viện **native** mới chỉ cài ở host (cần `pod install` và build lại app). Thư viện JS thuần chỉ một mini app dùng thì mini app tự đóng gói.
 - `react-native.config.js` của host chứa lệnh Re.Pack: `react-native start` và `react-native bundle` chạy Rspack.
 
-Luồng chạy khi người dùng bấm một ô trên Home:
+### Manifest và Remote Entry
+
+Hai file do Re.Pack **tự sinh lúc build**, không viết tay:
+
+| | Là gì | Tên trong dự án |
+|---|---|---|
+| Manifest | JSON mô tả mini app: tên, expose gì, chunk nào, thư viện dùng chung | `mf-manifest.json` |
+| Remote Entry (container) | File JS cổng vào để host nạp mini app | `work.container.js.bundle`, `sale.container.js.bundle` |
+
+Host chỉ cần biết **địa chỉ manifest** (`REMOTES` trong `rspack.config.mjs` của host); manifest trỏ tiếp tới Remote Entry và chunk. Phía mini app: `name` (tên remote), `filename` (tên Remote Entry), `exposes: {'./App': './src/index.tsx'}` trong `rspack.config.mjs` của package. Xem thử khi server đang chạy: `curl localhost:9001/ios/mf-manifest.json` (có `remoteEntry` và `exposes`).
+
+### Luồng chạy từ host sang mini app
+
+**Giai đoạn 1: lúc khởi động (chưa bấm gì)**
 
 ```
-Bấm ô (HomeScreen, key = 'work')
-  -> RootNavigator: MiniAppHost (hiện MiniAppLoading: vòng xoay thường, không logo)
-  -> loadMiniApp('work'): ensureReachable (thử gọi mf-manifest.json, tối đa 4 giây) rồi import('work/App')
-  -> runtime Module Federation đọc http://localhost:9001/<platform>/mf-manifest.json
-  -> tải work.container.js.bundle và chunk __federation_expose_App
-  -> packages/electro-go-work/src/index.tsx (export default WorkApp) hiển thị
+pnpm start:dev (Re.Pack :8081)           pnpm start:module (Re.Pack :9001, mini app work)
+   build bundle HOST                        build bundle mini app khi có yêu cầu
+        │
+        ▼
+App trên máy ảo tải index.bundle từ :8081
 ```
+Bundle host chỉ chứa **địa chỉ** của mini app (`work -> http://localhost:9001/ios/mf-manifest.json`), chưa chứa mã của nó, và khai báo `react`, `react-native`, `react-native-safe-area-context` là thư viện dùng chung (singleton).
+
+**Giai đoạn 2: lúc bấm ô trên Home**
+
+```
+HomeScreen            bấm ô, key = 'work'
+   │
+RootNavigator
+   └─ MiniAppHost     hiện MiniAppLoading (vòng xoay thường, không logo, tối thiểu 0,9 giây)
+        │
+   loadMiniApp('work')                         [src/app/remotes.ts]
+        │ 1. ensureReachable: fetch mf-manifest.json (tối đa 4 giây)
+        │      lỗi -> MiniAppErrorView (màn trắng, nút Đóng / Thử lại)
+        │ 2. import('work/App')  <- Module Federation chạy từ đây
+        ▼
+Runtime Module Federation (nằm trong bundle host)
+   3. đọc mf-manifest.json từ :9001 -> biết Remote Entry là work.container.js.bundle
+   4. tải work.container.js.bundle (qua ScriptManager của Re.Pack, module native)
+      -> mini app đăng ký mình là container "work"
+   5. "bắt tay" thư viện: host đưa react / react-native của nó cho mini app dùng
+   6. container.get('./App') -> tải chunk __federation_expose_App
+      (WorkApp, MiniNavigator, màn hình, Ionicons...)
+   7. trả về module, default export = WorkApp
+        │
+loadMiniApp resolve -> state = ready
+   └─ <state.Component /> = WorkApp      <- từ đây là mã của mini app
+```
+
+Sau khi vào mini app: `WorkApp -> MiniNavigator -> AttendanceScreen`. Mini app chạy **cùng app, cùng JS runtime, cùng bản React** với host, nên vẽ trực tiếp lên màn hình (không phải app khác chạy song song).
+
+Phân chia trách nhiệm:
+
+| Việc | Ai lo |
+|---|---|
+| Loading, lỗi kết nối, Đóng / Thử lại, nút "‹ Trang chủ" | Host (`MiniAppHost`) |
+| Crash khi mini app đang chạy | `MiniAppErrorBoundary` của host (hiện lại `MiniAppErrorView`) |
+| Header riêng, điều hướng nội bộ, loading/lỗi của **dữ liệu** (API) | Mini app (`MiniNavigator`, `StateView`) |
+
+Phân biệt ba component trong `src/shared/components/` của host: `MiniAppLoading` (đang tải), `MiniAppErrorView` (lỗi tải), `MiniAppErrorBoundary` (bọc ngoài màn thành công, chỉ hoạt động khi mini app crash). **Màn thành công chính là `<state.Component />`**, không nằm trong `shared/components`.
+
+**Dev và production**
+
+| | Dev | Production |
+|---|---|---|
+| Địa chỉ remote | `localhost:9001` (Android: `10.0.2.2`) | `WORK_REMOTE_URL` |
+| Nguồn file | Server `pnpm start:module` | Nơi đưa file trong `build/*.tar` lên |
+| Sửa mã mini app | Lưu, rồi mở lại ô hoặc bấm Thử lại | Build và đưa bản mới lên, không phải phát hành lại app host |
+
+Điểm mạnh: sau khi host đã lên store, cập nhật mini app chỉ cần thay file ở địa chỉ remote.
 
 Thêm mini app mới: thêm vào `REMOTES` (host), `src/types/remotes.d.ts`, `src/app/remotes.ts`, khóa trong `MiniAppKey` và dòng trong `data/miniApps.ts` của feature home, rồi dựng package theo skill `add-mini-app`.
+
+### Trang chủ host hiển thị nhiều module, mở thẳng màn hình đích
+
+Trang chủ của host liệt kê **từng chức năng** của các mini app (8 icon: Chấm công, Lịch làm việc, Nghỉ phép, Phiếu lương, Đơn hàng, Sản phẩm, Khách hàng, Báo cáo), không chỉ một icon cho mỗi mini app. Bấm một icon thì host nạp mini app tương ứng rồi **mở thẳng đúng màn hình đó**.
+
+- `src/features/home/data/miniApps.ts`: mỗi dòng là một icon, gồm `key` (duy nhất), `app` (mini app chứa module: `work`/`sale`), `screen` (màn hình mở thẳng), `label`, `icon` (Ionicons).
+- Host truyền `screen` vào mini app qua prop `initialRoute` (`<state.Component initialRoute={item.screen} />`, kiểu `MiniAppProps` trong `src/app/remotes.ts`).
+- Mini app nhận prop ở `app/<Tên>App.tsx` và `MiniNavigator.resolveInitialRoute`: `initialRoute` khớp một `ModuleKey` (`features/hub/data/modules.ts`) thì vào thẳng route đó, không khớp hoặc rỗng thì vào hub. Nên `screen` ở host **phải trùng `ModuleKey`** của mini app.
+- Khi mở thẳng, ngăn xếp màn hình của mini app chỉ có một màn, nên không có nút quay lại bên trong mini app; thoát bằng "‹ Trang chủ" của host. Màn loading hiển thị tên module (ví dụ "Đang tải Phiếu lương...").
+- Mini app cũ chưa có `initialRoute` vẫn chạy (prop bị bỏ qua, mở hub).
+
+Thêm một chức năng mới lên Trang chủ: làm xong feature trong mini app (xem bước bên dưới), rồi thêm **một dòng** vào `MINI_APPS` của host với `screen` đúng bằng khóa module mới.
+
+### Màn hình trung tâm (hub) và các chức năng của mini app
+
+Mỗi mini app mở vào **một màn hình trung tâm** `features/hub`: thẻ chào (`HubHero`) và lưới icon 4 cột (`FeatureGrid`, cùng ngôn ngữ thiết kế với Home của host, nền ô icon dùng chung `colors.iconTile`). Mỗi icon mở một chức năng, và mỗi chức năng là một feature độc lập có **giao diện riêng**:
+
+| Mini app | Chức năng (feature) |
+|---|---|
+| Chấm công (`electro-go-work`) | `attendance` (chấm công, lịch sử), `schedule` (lịch làm việc: dải 7 ngày + thẻ ca), `leave` (nghỉ phép: số dư + đơn kèm nhãn trạng thái), `payslip` (phiếu lương: chọn tháng, thực nhận, khoản cộng/trừ) |
+| Bán hàng (`electro-go-sale`) | `sales` (đơn hàng, chi tiết đơn), `products` (tìm kiếm, lưới sản phẩm, nhãn tồn kho), `customers` (danh sách khách, hạng Vàng/Bạc/Thường), `report` (KPI, biểu đồ cột vẽ bằng View, top bán chạy) |
+
+Thêm một chức năng mới vào mini app:
+1. Tạo `src/features/<tên>/` đủ khung (types, data, services, hooks, screens, components, index.ts); luồng dữ liệu screen -> hook (`useAsync`) -> service -> mock/http.
+2. Thêm khóa vào `ModuleKey` (`features/hub/types.ts`) và một dòng vào `MODULES` (`features/hub/data/modules.ts`, chọn icon Ionicons).
+3. Trong `app/navigation/MiniNavigator.tsx`: thêm vào `Route`, `TITLES` và nhánh `renderScreen`. Tên route trùng `ModuleKey` để hub gọi `push({name: key})`.
+4. Muốn module này hiện cả trên Trang chủ host: thêm một dòng vào `src/features/home/data/miniApps.ts` của host (`screen` = khóa module).
+5. Dùng lại component dùng chung trong `shared/components/` (`Chip` cho nhãn trạng thái, `StateView` cho loading/lỗi, `HubHero`, `FeatureGrid`) và màu từ `shared/theme.ts`.
 
 ## Cấu trúc source của host (feature-based)
 

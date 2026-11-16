@@ -8,7 +8,7 @@ import {
   View,
 } from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {HomeScreen, MINI_APPS, MiniAppKey} from '../features/home';
+import {HomeScreen, MiniAppItem} from '../features/home';
 import {SplashScreen} from '../features/splash';
 import MiniAppErrorBoundary from '../shared/components/MiniAppErrorBoundary';
 import MiniAppErrorView from '../shared/components/MiniAppErrorView';
@@ -16,7 +16,7 @@ import MiniAppLoading from '../shared/components/MiniAppLoading';
 import PlaceholderScreen from '../shared/components/PlaceholderScreen';
 import {colors, spacing} from '../shared/theme';
 import BottomTabBar from './BottomTabBar';
-import {loadMiniApp} from './remotes';
+import {loadMiniApp, MiniAppProps} from './remotes';
 import {TABS, TabKey} from './tabs';
 
 // Dữ liệu mẫu; sau này lấy từ API/store (feature notifications).
@@ -29,7 +29,7 @@ const MOCK_BADGES: Partial<Record<TabKey, number>> = {notifications: 12};
 export default function RootNavigator() {
   const insets = useSafeAreaInsets();
   const [tab, setTab] = useState<TabKey>('home');
-  const [miniApp, setMiniApp] = useState<MiniAppKey | null>(null);
+  const [miniApp, setMiniApp] = useState<MiniAppItem | null>(null);
   const [showSplash, setShowSplash] = useState(true);
   const hideSplash = useCallback(() => setShowSplash(false), []);
 
@@ -37,7 +37,7 @@ export default function RootNavigator() {
 
   // Mini app chiếm toàn màn hình, không hiện thanh tab.
   if (miniApp !== null) {
-    return <MiniAppHost miniApp={miniApp} onClose={() => setMiniApp(null)} topInset={insets.top} />;
+    return <MiniAppHost item={miniApp} onClose={() => setMiniApp(null)} topInset={insets.top} />;
   }
 
   const current = TABS.find(t => t.key === tab)!;
@@ -76,11 +76,11 @@ const styles = StyleSheet.create({
 /** Thời gian tối thiểu hiện màn loading khi tải/thử lại mini app. */
 const MIN_LOADING_MS = 900;
 
-type MiniAppHostProps = {miniApp: MiniAppKey; onClose: () => void; topInset: number};
+type MiniAppHostProps = {item: MiniAppItem; onClose: () => void; topInset: number};
 
 type LoadState =
   | {status: 'loading'}
-  | {status: 'ready'; Component: ComponentType}
+  | {status: 'ready'; Component: ComponentType<MiniAppProps>}
   | {status: 'error'; message: string};
 
 /**
@@ -88,10 +88,10 @@ type LoadState =
  * loading (logo) -> ready (hiện mini app) hoặc error (màn trắng có nút Thử lại / Đóng).
  * Không dùng lazy/Suspense để lỗi tải không bị ném trong lúc render (tránh màn đỏ ở chế độ dev).
  */
-function MiniAppHost({miniApp, onClose, topInset}: MiniAppHostProps) {
+function MiniAppHost({item, onClose, topInset}: MiniAppHostProps) {
   const [attempt, setAttempt] = useState(0);
   const [state, setState] = useState<LoadState>({status: 'loading'});
-  const name = MINI_APPS.find(a => a.key === miniApp)?.label ?? miniApp;
+  const name = item.label; // hiển thị tên module đang mở, ví dụ "Phiếu lương"
 
   useEffect(() => {
     let cancelled = false;
@@ -100,7 +100,7 @@ function MiniAppHost({miniApp, onClose, topInset}: MiniAppHostProps) {
     // Giữ màn loading (logo) tối thiểu MIN_LOADING_MS, kể cả khi kết quả (nhất là lỗi) về gần như tức thì,
     // để người dùng thấy rõ app đang thử lại thay vì thấy màn hình chớp.
     const minWait = new Promise<void>(resolve => setTimeout(resolve, MIN_LOADING_MS));
-    const result = loadMiniApp(miniApp).then(
+    const result = loadMiniApp(item.app).then(
       (Component): LoadState => ({status: 'ready', Component}),
       (e): LoadState => ({
         status: 'error',
@@ -116,7 +116,7 @@ function MiniAppHost({miniApp, onClose, topInset}: MiniAppHostProps) {
     return () => {
       cancelled = true;
     };
-  }, [miniApp, attempt]);
+  }, [item.app, attempt]);
 
   return (
     <View style={[styles.miniApp, {paddingTop: topInset}]}>
@@ -138,7 +138,7 @@ function MiniAppHost({miniApp, onClose, topInset}: MiniAppHostProps) {
       )}
       {state.status === 'ready' && (
         <MiniAppErrorBoundary name={name} onClose={onClose}>
-          <state.Component />
+          <state.Component initialRoute={item.screen} />
         </MiniAppErrorBoundary>
       )}
     </View>
