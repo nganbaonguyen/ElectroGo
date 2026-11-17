@@ -11,6 +11,11 @@ description: Thêm một mini app mới (package riêng, repo git riêng) vào s
 > - **Kết quả:** repo mới trên GitHub, được gắn vào `packages/` và cài vào host.
 > - **Skill liên quan:** `electrogo-superapp` (kiến trúc), `sync-submodules` (đồng bộ sau này).
 
+> **Khi sửa file này:** đọc trước `../README.md`, mục "Quy ước khi sửa tài liệu skill". Riêng file này:
+> - Chi tiết cấu hình Rspack và 5 file cần sửa ở host ghi ở `electrogo-superapp` (Phần B, C); ở đây chỉ nêu việc cần làm, không chép lại chi tiết.
+> - Danh sách `peerDependencies` phải khớp `package.json` của `packages/electro-go-work`.
+> - Không tự tạo repo GitHub hay `push` khi người dùng chưa đồng ý (bước 1).
+
 Mỗi mini app là **một repo git riêng**, gắn vào host ở `packages/<tên-repo>` bằng submodule. Xem kiến trúc đầy đủ ở skill `electrogo-superapp`.
 
 Quy ước đặt tên: repo `electro-go-<tên>`, package `@electrogo/<tên>`, component gốc `<Tên>App`.
@@ -19,7 +24,7 @@ Quy ước đặt tên: repo `electro-go-<tên>`, package `@electrogo/<tên>`, c
 
 1. **Hỏi người dùng** tên mini app và URL repo GitHub trống (hoặc xác nhận tạo repo). Không tự push khi chưa được đồng ý.
 2. **Dựng khung ở thư mục tạm** (không nằm trong ElectroGo), vì submodule không gắn được vào repo trống. Khung phải đúng **chuẩn cấu trúc mini app** trong skill `electrogo-superapp` (nên sao chép từ `packages/electro-go-work` rồi đổi tên cho nhanh):
-   - `package.json`: `name: "@electrogo/<tên>"`, `main: "src/index.tsx"`, `peerDependencies: "*"` cho `react`, `react-native`, `@react-native-vector-icons/ionicons`; không có dependency cài đặt riêng.
+   - `package.json`: `name: "@electrogo/<tên>"`, `main: "src/index.tsx"`, `peerDependencies: "*"` cho `react`, `react-native`, `react-native-safe-area-context`, `@react-native-vector-icons/ionicons`; không có dependency cài đặt riêng.
    - `src/index.tsx` (export default + `manifest`), `manifest.ts`, `app/<Tên>App.tsx`, `app/navigation/MiniNavigator.tsx`.
    - `features/<feature>/` (screens, components, hooks, services, data, types, index.ts), `services/api/`, `config/env.ts`, `assets/` (images/index.ts, icons.ts), `shared/` (theme, components, hooks, navigation, utils).
    - `.gitignore` (`node_modules/`, `.DS_Store`) và `README.md` mô tả cấu trúc.
@@ -36,5 +41,8 @@ Quy ước đặt tên: repo `electro-go-<tên>`, package `@electrogo/<tên>`, c
 ## Lưu ý
 
 - Mini app không có thư mục `android/` hay `ios/`; thư viện native chỉ cài ở host.
-- Mini app không import lẫn nhau, chỉ import từ `packages/shared`.
+- Mini app không import mã của host hay của mini app khác. Package `packages/shared` chưa có; hiện mỗi mini app giữ một bản `shared/theme.ts` riêng.
+- Tên phải **khớp xuyên suốt**: `name` trong `rspack.config.mjs` của mini app = khóa trong `REMOTES` của host = `'<tên>/App'` trong `remotes.d.ts` = khóa `MiniAppKey`.
+- Bước 4 và 5 chính là Phần B và Phần C của mục "Setup từ đầu" trong skill `electrogo-superapp`, có thêm bảng 5 file cần sửa ở host.
+- Mini app mới thêm xong thì push repo con trước, rồi commit `.gitmodules` và con trỏ ở host (xem skill `sync-submodules`).
 - Nếu `git submodule add` báo repo không có commit nào, repo đang trống: quay lại bước 2-3.

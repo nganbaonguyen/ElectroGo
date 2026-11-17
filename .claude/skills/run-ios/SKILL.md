@@ -1,6 +1,6 @@
 ---
 name: run-ios
-description: Chạy ElectroGo lên iOS simulator (hoặc Android emulator) và xử lý lỗi thường gặp. Dùng khi người dùng muốn chạy app lên máy ảo, đổi icon xong cần build lại, hoặc Metro/build bị lỗi.
+description: Chạy ElectroGo lên iOS simulator (hoặc Android emulator) và xử lý lỗi thường gặp. Dùng khi người dùng muốn chạy app lên máy ảo, đổi icon xong cần build lại, hoặc Re.Pack/build bị lỗi, mini app không tải được.
 ---
 
 # Chạy ElectroGo lên máy ảo
@@ -9,7 +9,13 @@ description: Chạy ElectroGo lên iOS simulator (hoặc Android emulator) và x
 > - **Skill này là gì:** hướng dẫn chạy app lên iOS simulator / Android emulator và sửa lỗi thường gặp.
 > - **Dùng khi:** muốn chạy app, vừa đổi icon, mini app không tải được, hoặc build báo lỗi.
 > - **Lệnh nhanh:** `pnpm ios --udid 4DC1F4E3-2A4A-47D5-9E24-7AD54E541D18`
-> - **Skill liên quan:** `electrogo-superapp` (kiến trúc Re.Pack + Module Federation).
+> - **Skill liên quan:** `electrogo-superapp` (kiến trúc và setup Re.Pack + Module Federation), `sync-submodules` (clone thiếu code mini app).
+
+> **Khi sửa file này:** đọc trước `../README.md`, mục "Quy ước khi sửa tài liệu skill". Riêng file này:
+> - UDID và tên simulator phải kiểm tra lại bằng `xcrun simctl list devices` trước khi đổi; không ghi từ trí nhớ.
+> - Cổng (8081 host, 9001 work, 9002 sale) phải khớp `electrogo-superapp`; cách setup và chạy server chi tiết ghi ở đó, ở đây chỉ nhắc ngắn.
+> - Mỗi dòng trong bảng lỗi phải là lỗi đã gặp thật, có triệu chứng và cách xử lý đã thử.
+> - Chỉ chạy lệnh build, chạy app khi người dùng yêu cầu.
 
 Package manager là **pnpm** (không dùng yarn). Chạy ở thư mục gốc project.
 
@@ -43,14 +49,27 @@ Mở Android Emulator từ Android Studio, kiểm tra `adb devices`, rồi `pnpm
 
 ## Lỗi thường gặp
 
-| Triệu chứng | Cách xử lý |
-|---|---|
-| Bundler kẹt cache, màn hình trắng | Dừng server, xóa `build/` rồi chạy lại `pnpm start:dev` |
-| `Module not found` ở subpath package (vd `@module-federation/runtime/helpers`) | Thiếu `enablePackageExports: true` trong `Repack.getResolveOptions(...)` của `rspack.config.mjs` |
-| Lỗi module/symlink của pnpm | `.npmrc` cần `node-linker=hoisted`, xóa `node_modules` và `pnpm install` lại |
-| Android emulator không tải được mini app | Host dùng `10.0.2.2` cho Android; thiết bị thật thì đặt `REMOTE_HOST=<IP máy>` khi chạy `pnpm start:dev` |
-| Đổi icon nhưng không thấy đổi | Icon nằm trong bản build: gỡ app khỏi máy ảo rồi build lại |
-| Clone mới thiếu code mini app | `git submodule update --init --recursive` |
+```
++----------------------------------------------------+-----------------------------------------------------+
+| Triệu chứng                                        | Cách xử lý                                          |
++====================================================+=====================================================+
+| Bundler kẹt cache, màn hình trắng                  | Dừng server, xóa build/ rồi chạy lại pnpm start:dev |
++----------------------------------------------------+-----------------------------------------------------+
+| Module not found ở subpath package (vd             | Thiếu enablePackageExports: true trong              |
+| @module-federation/runtime/helpers)                | Repack.getResolveOptions(...) của rspack.config.mjs |
++----------------------------------------------------+-----------------------------------------------------+
+| Lỗi module/symlink của pnpm                        | .npmrc cần node-linker=hoisted, xóa node_modules và |
+|                                                    | pnpm install lại                                    |
++----------------------------------------------------+-----------------------------------------------------+
+| Android emulator không tải được mini app           | Host dùng 10.0.2.2 cho Android; thiết bị thật thì   |
+|                                                    | đặt REMOTE_HOST=<IP máy> khi chạy pnpm start:dev    |
++----------------------------------------------------+-----------------------------------------------------+
+| Đổi icon nhưng không thấy đổi                      | Icon nằm trong bản build: gỡ app khỏi máy ảo rồi    |
+|                                                    | build lại                                           |
++----------------------------------------------------+-----------------------------------------------------+
+| Clone mới thiếu code mini app                      | git submodule update --init --recursive             |
++----------------------------------------------------+-----------------------------------------------------+
+```
 
 ## Lưu ý
 

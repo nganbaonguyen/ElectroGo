@@ -9,9 +9,16 @@ description: Cập nhật, đồng bộ và commit các mini app (git submodule)
 > - **Skill này là gì:** cách đồng bộ code giữa host và các mini app (git submodule).
 > - **Dùng khi:** sửa mini app rồi cần host nhận bản mới, kéo bản mới của người khác, hoặc clone mà thiếu code.
 > - **Quy tắc quan trọng nhất:** push repo con **trước**, rồi mới commit con trỏ ở host.
-> - **Skill liên quan:** `add-mini-app` (thêm app mới).
+> - **Skill liên quan:** `add-mini-app` (thêm app mới), `electrogo-superapp` (kiến trúc, cách chạy server mini app), `run-ios` (chạy app).
+
+> **Khi sửa file này:** đọc trước `../README.md`, mục "Quy ước khi sửa tài liệu skill". Riêng file này:
+> - Giữ nguyên thứ tự bắt buộc: **push repo con trước, commit con trỏ ở host sau**. Không đảo trong bất kỳ ví dụ nào.
+> - Mọi lệnh và đường dẫn làm việc với `packages/` (submodule), không phải `sub/`. Đối chiếu `.gitmodules` trước khi ghi tên repo, URL.
+> - Chỉ commit hoặc push khi người dùng yêu cầu; ví dụ lệnh chỉ để minh họa, không tự chạy.
 
 Host chỉ ghi nhớ **một commit cụ thể** của mỗi mini app. Push ở repo con chưa đủ: phải commit ở host thì host mới trỏ sang bản mới.
+
+**Lưu ý về thư mục `sub/`:** repo có thêm thư mục `sub/` (bị `.gitignore`) do lệnh `pnpm subs` tạo ra, là bản clone riêng để xem code. Nó **không phải submodule** và không dùng để chạy app. Code chạy thật nằm ở `packages/`.
 
 ## Các tình huống
 
@@ -49,13 +56,29 @@ pnpm ios --udid <UDID>       # xem skill run-ios
 
 **Lỗi thường gặp khi tải submodule**
 
-| Triệu chứng | Nguyên nhân | Cách xử lý |
-|---|---|---|
-| `packages/electro-go-*` rỗng | Chưa chạy `submodule update --init` | Chạy Cách 2 |
-| `Authentication failed` / `Repository not found` | Repo con là private, tài khoản chưa có quyền hoặc chưa đăng nhập | Đăng nhập GitHub (token/SSH) và đảm bảo tài khoản có quyền đọc cả hai repo con |
-| `fatal: remote error: upload-pack: not our ref <commit>` | Host trỏ tới commit của repo con chưa được push | Người làm host cần push repo con **trước** (xem mục "Sửa code mini app" bên dưới) |
-| `Unable to resolve module @electrogo/work` sau khi tải | Chưa `pnpm install` hoặc Metro còn cache | `pnpm install`, rồi `pnpm start --reset-cache` |
-| Đổi URL repo con nhưng vẫn tải về chỗ cũ | `.gitmodules` đã đổi nhưng cấu hình cục bộ chưa đồng bộ | `git submodule sync --recursive` rồi chạy lại Cách 2 |
+```
++----------------------------------+-----------------------------------+-----------------------------------+
+| Triệu chứng                      | Nguyên nhân                       | Cách xử lý                        |
++==================================+===================================+===================================+
+| packages/electro-go-* rỗng       | Chưa chạy submodule update --init | Chạy Cách 2                       |
++----------------------------------+-----------------------------------+-----------------------------------+
+| Authentication failed /          | Repo con là private, tài khoản    | Đăng nhập GitHub (token/SSH) và   |
+| Repository not found             | chưa có quyền hoặc chưa đăng nhập | đảm bảo tài khoản có quyền đọc cả |
+|                                  |                                   | hai repo con                      |
++----------------------------------+-----------------------------------+-----------------------------------+
+| fatal: remote error:             | Host trỏ tới commit của repo con  | Người làm host cần push repo con  |
+| upload-pack: not our ref         | chưa được push                    | trước (xem mục "Sửa code mini     |
+| <commit>                         |                                   | app" bên dưới)                    |
++----------------------------------+-----------------------------------+-----------------------------------+
+| Bấm ô trên Home báo "Không tải   | Chưa pnpm install, hoặc chưa chạy | pnpm install, rồi chạy pnpm       |
+| được ..." sau khi tải            | server của mini app               | start:module trong thư mục mini   |
+|                                  |                                   | app (xem skill                    |
+|                                  |                                   | electrogo-superapp, Phần D)       |
++----------------------------------+-----------------------------------+-----------------------------------+
+| Đổi URL repo con nhưng vẫn tải   | .gitmodules đã đổi nhưng cấu hình | git submodule sync --recursive    |
+| về chỗ cũ                        | cục bộ chưa đồng bộ               | rồi chạy lại Cách 2               |
++----------------------------------+-----------------------------------+-----------------------------------+
+```
 
 ### Sửa code mini app rồi đưa lên host
 
@@ -93,11 +116,19 @@ git push
 
 **Kiểm tra lại:** `git submodule status` không còn dấu `+` ở đầu dòng.
 
-| Lỗi | Nguyên nhân | Cách xử lý |
-|---|---|---|
-| Bước 2 không thấy thay đổi | Chưa commit ở repo con | Quay lại bước 1 |
-| `git push` ở repo con bị từ chối | Nhánh con cũ hơn remote | `git pull --rebase` rồi push lại |
-| Người khác pull host báo `not our ref` | Push host nhưng quên push repo con | Vào repo con chạy `git push`, rồi để họ chạy lại `git submodule update --init` |
+```
++----------------------------------+-----------------------------------+-----------------------------------+
+| Lỗi                              | Nguyên nhân                       | Cách xử lý                        |
++==================================+===================================+===================================+
+| Bước 2 không thấy thay đổi       | Chưa commit ở repo con            | Quay lại bước 1                   |
++----------------------------------+-----------------------------------+-----------------------------------+
+| git push ở repo con bị từ chối   | Nhánh con cũ hơn remote           | git pull --rebase rồi push lại    |
++----------------------------------+-----------------------------------+-----------------------------------+
+| Người khác pull host báo not our | Push host nhưng quên push repo    | Vào repo con chạy git push, rồi   |
+| ref                              | con                               | để họ chạy lại git submodule      |
+|                                  |                                   | update --init                     |
++----------------------------------+-----------------------------------+-----------------------------------+
+```
 
 ### Kéo bản mới của mini app do người khác push
 
@@ -115,10 +146,17 @@ Chỉ cập nhật một mini app: `git submodule update --remote packages/elect
 
 **Phân biệt hai lệnh dễ nhầm:**
 
-| Lệnh | Ý nghĩa |
-|---|---|
-| `git submodule update --init --recursive` | Đưa repo con về **đúng commit host đang ghi nhận** (dùng khi clone, hoặc sau khi `git pull` host) |
-| `git submodule update --remote` | Đưa repo con lên **commit mới nhất trên remote** (rồi phải commit ở host để ghi nhận) |
+```
++-----------------------------------------+----------------------------------------------------------------+
+| Lệnh                                    | Ý nghĩa                                                        |
++=========================================+================================================================+
+| git submodule update --init --recursive | Đưa repo con về đúng commit host đang ghi nhận (dùng khi       |
+|                                         | clone, hoặc sau khi git pull host)                             |
++-----------------------------------------+----------------------------------------------------------------+
+| git submodule update --remote           | Đưa repo con lên commit mới nhất trên remote (rồi phải commit  |
+|                                         | ở host để ghi nhận)                                            |
++-----------------------------------------+----------------------------------------------------------------+
+```
 
 **Sau khi `git pull` ở host**, nếu thấy con trỏ submodule đổi, hãy chạy `git submodule update --init --recursive` để code mini app khớp với host.
 
@@ -128,12 +166,21 @@ Chỉ cập nhật một mini app: `git submodule update --remote packages/elect
 git submodule status
 ```
 
-| Ký hiệu đầu dòng | Ý nghĩa | Cần làm |
-|---|---|---|
-| (khoảng trắng) | Đúng commit host ghi nhận | Không cần |
-| `-` | Chưa được tải | `git submodule update --init --recursive` |
-| `+` | Repo con đang ở commit khác host ghi nhận | Nếu muốn giữ: commit con trỏ ở host. Nếu không: `git submodule update` để về lại |
-| `U` | Đang xung đột | Giải quyết xung đột trong repo con rồi `git add` |
+```
++------------------+-------------------------------------------+-------------------------------------------+
+| Ký hiệu đầu dòng | Ý nghĩa                                   | Cần làm                                   |
++==================+===========================================+===========================================+
+| (khoảng trắng)   | Đúng commit host ghi nhận                 | Không cần                                 |
++------------------+-------------------------------------------+-------------------------------------------+
+| -                | Chưa được tải                             | git submodule update --init --recursive   |
++------------------+-------------------------------------------+-------------------------------------------+
+| +                | Repo con đang ở commit khác host ghi nhận | Nếu muốn giữ: commit con trỏ ở host. Nếu  |
+|                  |                                           | không: git submodule update để về lại     |
++------------------+-------------------------------------------+-------------------------------------------+
+| U                | Đang xung đột                             | Giải quyết xung đột trong repo con rồi    |
+|                  |                                           | git add                                   |
++------------------+-------------------------------------------+-------------------------------------------+
+```
 
 ## Cạm bẫy
 
