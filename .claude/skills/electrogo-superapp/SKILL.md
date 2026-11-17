@@ -19,6 +19,9 @@ description: Kiến trúc và cách setup super app ElectroGo (host + mini app e
 | Thêm chức năng, sửa code | Quy tắc bắt buộc, Trang chủ host, Màn hình trung tâm (hub), Chuẩn cấu trúc   |
 |                          | của một mini app                                                             |
 +--------------------------+------------------------------------------------------------------------------+
+| Ôn phỏng vấn             | Đọc giai-thich-chi-tiet.md (cùng thư mục): vì sao, hoạt động thế nào, câu    |
+|                          | hỏi phỏng vấn kèm gợi ý trả lời                                              |
++--------------------------+------------------------------------------------------------------------------+
 | Skill liên quan          | add-mini-app (thêm app con), sync-submodules (đồng bộ), run-ios (chạy app,   |
 |                          | lỗi build)                                                                   |
 +--------------------------+------------------------------------------------------------------------------+
@@ -105,7 +108,7 @@ Node >= 22.11, pnpm, Xcode + CocoaPods (iOS), Android Studio (Android), Git.
 2. **Cấu hình pnpm** ở thư mục gốc:
    - `.npmrc`: `node-linker=hoisted` (để package trong `packages/` tìm được thư viện cài ở gốc).
    - `pnpm-workspace.yaml`: `packages: ['packages/*']`.
-3. **Cài Re.Pack và Module Federation** (Re.Pack 5.4.3 tương thích Rspack 1.x, **không** dùng Rspack 2.x):
+3. **Cài Re.Pack và Module Federation** (dự án khóa Rspack ở 1.x. Re.Pack 5.4.3 khai báo peerDependency @rspack/core >=1 nên không cấm 2.x, nhưng chưa kiểm chứng 2.x chạy được):
    ```bash
    pnpm add -D @callstack/repack@5.4.3 '@rspack/core@^1.6.0' @swc/helpers
    pnpm add @module-federation/enhanced@2.9.3

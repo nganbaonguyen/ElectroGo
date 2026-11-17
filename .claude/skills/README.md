@@ -35,6 +35,8 @@ Mỗi skill nằm trong một thư mục riêng và file bên trong luôn tên `
 +----------------------------------------------------+-----------------------------------------------------+
 | Dựng lại super app từ đầu                          | electrogo-superapp, mục "Setup từ đầu"              |
 +----------------------------------------------------+-----------------------------------------------------+
+| Ôn phỏng vấn, hiểu sâu từng phần                   | electrogo-superapp/giai-thich-chi-tiet.md           |
++----------------------------------------------------+-----------------------------------------------------+
 | Thêm một mini app mới                              | add-mini-app (cần đọc thêm Phần B, C của            |
 |                                                    | electrogo-superapp)                                 |
 +----------------------------------------------------+-----------------------------------------------------+
@@ -61,7 +63,7 @@ Host (app React Native thật) + mini app (repo riêng, gắn bằng git submodu
 
 ## Quy ước khi sửa tài liệu skill
 
-**BẮT BUỘC, đọc trước khi sửa bất kỳ file nào ở đây.** Đây là chuẩn chung cho cả 5 file. Mỗi `SKILL.md` chỉ ghi thêm phần riêng của nó (mục "Ghi chú cho người sửa file này" ở cuối file), không lặp lại chuẩn này.
+**BẮT BUỘC, đọc trước khi sửa bất kỳ file nào ở đây.** Đây là chuẩn chung cho cả 5 file và file giai-thich-chi-tiet.md. Mỗi `SKILL.md` chỉ ghi thêm phần riêng của nó (mục "Ghi chú cho người sửa file này" ở cuối file), không lặp lại chuẩn này.
 
 ### 1. Nội dung phải đúng với repo
 
@@ -124,5 +126,5 @@ for p in sys.argv[1:]:
         else:
             if blk and (len({w for _,w in blk})>1 or blk[0][1]>108): print(p,blk[0][0],'bảng lệch hoặc rộng quá 108')
             blk=[]
-" .claude/skills/README.md .claude/skills/*/SKILL.md
+" .claude/skills/README.md .claude/skills/*/*.md
 ```
