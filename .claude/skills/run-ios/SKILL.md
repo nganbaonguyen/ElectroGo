@@ -5,17 +5,26 @@ description: Chạy ElectroGo lên iOS simulator (hoặc Android emulator) và x
 
 # Chạy ElectroGo lên máy ảo
 
-> **Tóm tắt**
-> - **Skill này là gì:** hướng dẫn chạy app lên iOS simulator / Android emulator và sửa lỗi thường gặp.
-> - **Dùng khi:** muốn chạy app, vừa đổi icon, mini app không tải được, hoặc build báo lỗi.
-> - **Lệnh nhanh:** `pnpm ios --udid 4DC1F4E3-2A4A-47D5-9E24-7AD54E541D18`
-> - **Skill liên quan:** `electrogo-superapp` (kiến trúc và setup Re.Pack + Module Federation), `sync-submodules` (clone thiếu code mini app).
-
-> **Khi sửa file này:** đọc trước `../README.md`, mục "Quy ước khi sửa tài liệu skill". Riêng file này:
-> - UDID và tên simulator phải kiểm tra lại bằng `xcrun simctl list devices` trước khi đổi; không ghi từ trí nhớ.
-> - Cổng (8081 host, 9001 work, 9002 sale) phải khớp `electrogo-superapp`; cách setup và chạy server chi tiết ghi ở đó, ở đây chỉ nhắc ngắn.
-> - Mỗi dòng trong bảng lỗi phải là lỗi đã gặp thật, có triệu chứng và cách xử lý đã thử.
-> - Chỉ chạy lệnh build, chạy app khi người dùng yêu cầu.
+```
++--------------------------+------------------------------------------------------------------------------+
+| TÓM TẮT                  | run-ios                                                                      |
++==========================+==============================================================================+
+| Là gì                    | Hướng dẫn chạy app lên iOS simulator / Android emulator và sửa lỗi thường    |
+|                          | gặp                                                                          |
++--------------------------+------------------------------------------------------------------------------+
+| Dùng khi                 | Muốn chạy app, vừa đổi icon, mini app không tải được, hoặc build báo lỗi     |
++--------------------------+------------------------------------------------------------------------------+
+| Lệnh nhanh               | pnpm ios --udid 4DC1F4E3-2A4A-47D5-9E24-7AD54E541D18                         |
++--------------------------+------------------------------------------------------------------------------+
+| Các mục                  | iOS, Android, Lỗi thường gặp, Lưu ý                                          |
++--------------------------+------------------------------------------------------------------------------+
+| Skill liên quan          | electrogo-superapp (kiến trúc, setup), sync-submodules (clone thiếu code     |
+|                          | mini app)                                                                    |
++--------------------------+------------------------------------------------------------------------------+
+| Khi sửa file này         | Đọc README.md, mục "Quy ước khi sửa tài liệu skill", và mục "Ghi chú cho     |
+|                          | người sửa" ở cuối file này                                                   |
++--------------------------+------------------------------------------------------------------------------+
+```
 
 Package manager là **pnpm** (không dùng yarn). Chạy ở thư mục gốc project.
 
@@ -75,3 +84,12 @@ Mở Android Emulator từ Android Studio, kiểm tra `adb devices`, rồi `pnpm
 
 - Chỉ chạy các lệnh trên khi người dùng yêu cầu chạy app.
 - Nếu build lỗi, đọc log lỗi đầy đủ trước khi đề xuất cách sửa.
+
+## Ghi chú cho người sửa file này
+
+Đọc trước README.md, mục "Quy ước khi sửa tài liệu skill". Riêng file này:
+
+- UDID và tên simulator phải kiểm tra lại bằng xcrun simctl list devices trước khi đổi. Không ghi từ trí nhớ.
+- Cổng (8081 host, 9001 work, 9002 sale) phải khớp electrogo-superapp. Cách setup và chạy server chi tiết ghi ở đó, ở đây chỉ nhắc ngắn.
+- Mỗi dòng trong bảng lỗi phải là lỗi đã gặp thật, có triệu chứng và cách xử lý đã thử.
+- Chỉ chạy lệnh build, chạy app khi người dùng yêu cầu.

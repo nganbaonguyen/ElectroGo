@@ -5,17 +5,29 @@ description: Kiến trúc và cách setup super app ElectroGo (host + mini app e
 
 # ElectroGo Super App
 
-> **Tóm tắt**
-> - **Skill này là gì:** tài liệu kiến trúc + hướng dẫn setup super app từ đầu.
-> - **Muốn dựng lại từ đầu:** đọc mục "Setup từ đầu" (5 phần A, B, C, D, E).
-> - **Muốn hiểu app chạy thế nào:** đọc mục "Hiểu nhanh" và "Luồng chạy".
-> - **Skill liên quan:** `add-mini-app` (thêm app con), `sync-submodules` (đồng bộ submodule), `run-ios` (chạy app, xử lý lỗi build).
-
-> **Khi sửa file này:** đọc trước `../README.md`, mục "Quy ước khi sửa tài liệu skill" (bảng kẻ khung, không ghi Metro, đối chiếu repo). Riêng file này:
-> - Tên phải khớp xuyên suốt: `name` trong `rspack.config.mjs` của mini app = khóa trong `REMOTES` của host = `'<tên>/App'` trong `remotes.d.ts` = khóa `MiniAppKey`.
-> - Mọi số cổng (8081, 9001, 9002) và tên container phải đối chiếu `rspack.config.mjs` của host và của mini app.
-> - Thêm bước setup thì đặt đúng phần A-E và có dòng "Xong khi".
-> - Cây thư mục phải khớp thực tế (`ls`); `packages/shared` chưa có thì không vẽ vào.
+```
++--------------------------+------------------------------------------------------------------------------+
+| TÓM TẮT                  | electrogo-superapp                                                           |
++==========================+==============================================================================+
+| Là gì                    | Tài liệu kiến trúc và hướng dẫn setup super app ElectroGo từ đầu             |
++--------------------------+------------------------------------------------------------------------------+
+| Hiểu app chạy thế nào    | Hiểu nhanh, Cấu trúc thư mục, Luồng chạy từ host sang mini app               |
++--------------------------+------------------------------------------------------------------------------+
+| Dựng lại từ đầu          | Setup từ đầu: Phần A (host), B (mini app), C (nối vào host), D (chạy thử), E |
+|                          | (production)                                                                 |
++--------------------------+------------------------------------------------------------------------------+
+| Thêm chức năng, sửa code | Quy tắc bắt buộc, Trang chủ host, Màn hình trung tâm (hub), Chuẩn cấu trúc   |
+|                          | của một mini app                                                             |
++--------------------------+------------------------------------------------------------------------------+
+| Skill liên quan          | add-mini-app (thêm app con), sync-submodules (đồng bộ), run-ios (chạy app,   |
+|                          | lỗi build)                                                                   |
++--------------------------+------------------------------------------------------------------------------+
+| Tìm nhanh một mục        | Cmd+Shift+O rồi gõ tên mục để nhảy tới mục đó                                |
++--------------------------+------------------------------------------------------------------------------+
+| Khi sửa file này         | Đọc README.md, mục "Quy ước khi sửa tài liệu skill", và mục "Ghi chú cho     |
+|                          | người sửa" ở cuối file này                                                   |
++--------------------------+------------------------------------------------------------------------------+
+```
 
 ## Hiểu nhanh
 
@@ -430,3 +442,12 @@ Quy ước bắt buộc:
 1. Nơi triển khai bundle mini app production (CDN/URL nào) để đặt `WORK_REMOTE_URL`, `SALE_REMOTE_URL`.
 2. Có dùng chung đăng nhập và API giữa các app không? Nếu có thì tách thêm package `shared`.
 3. Có cần ký bundle (code signing của Re.Pack) khi triển khai production không?
+
+## Ghi chú cho người sửa file này
+
+Đọc trước README.md, mục "Quy ước khi sửa tài liệu skill". Riêng file này:
+
+- Tên phải khớp xuyên suốt: name trong rspack.config.mjs của mini app = khóa trong REMOTES của host = '<tên>/App' trong remotes.d.ts = khóa MiniAppKey.
+- Mọi số cổng (8081, 9001, 9002) và tên container phải đối chiếu rspack.config.mjs của host và của mini app.
+- Thêm bước setup thì đặt đúng phần A-E và có dòng "Xong khi".
+- Cây thư mục phải khớp thực tế (dùng ls). packages/shared chưa có thì không vẽ vào.

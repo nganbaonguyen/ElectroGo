@@ -2,19 +2,28 @@
 name: add-mini-app
 description: Thêm một mini app mới (package riêng, repo git riêng) vào super app ElectroGo qua git submodule. Dùng khi người dùng muốn tạo thêm app con ngoài electro-go-work và electro-go-sale.
 ---
+repo: Kho lưu trữ
 
 # Thêm mini app mới vào ElectroGo
 
-> **Tóm tắt**
-> - **Skill này là gì:** quy trình từng bước để thêm một mini app (repo riêng) vào super app.
-> - **Dùng khi:** muốn tạo thêm app con ngoài `electro-go-work` và `electro-go-sale`.
-> - **Kết quả:** repo mới trên GitHub, được gắn vào `packages/` và cài vào host.
-> - **Skill liên quan:** `electrogo-superapp` (kiến trúc), `sync-submodules` (đồng bộ sau này).
-
-> **Khi sửa file này:** đọc trước `../README.md`, mục "Quy ước khi sửa tài liệu skill". Riêng file này:
-> - Chi tiết cấu hình Rspack và 5 file cần sửa ở host ghi ở `electrogo-superapp` (Phần B, C); ở đây chỉ nêu việc cần làm, không chép lại chi tiết.
-> - Danh sách `peerDependencies` phải khớp `package.json` của `packages/electro-go-work`.
-> - Không tự tạo repo GitHub hay `push` khi người dùng chưa đồng ý (bước 1).
+```
++--------------------------+------------------------------------------------------------------------------+
+| TÓM TẮT                  | add-mini-app                                                                 |
++==========================+==============================================================================+
+| Là gì                    | Quy trình từng bước thêm một mini app (repo riêng) vào super app             |
++--------------------------+------------------------------------------------------------------------------+
+| Dùng khi                 | Muốn tạo thêm app con ngoài electro-go-work và electro-go-sale               |
++--------------------------+------------------------------------------------------------------------------+
+| Kết quả                  | Repo mới trên GitHub, gắn vào packages/ và nối vào host                      |
++--------------------------+------------------------------------------------------------------------------+
+| Đọc kèm                  | electrogo-superapp: Phần B (dựng mini app) và Phần C (nối vào host)          |
++--------------------------+------------------------------------------------------------------------------+
+| Skill liên quan          | electrogo-superapp (kiến trúc), sync-submodules (đồng bộ sau này)            |
++--------------------------+------------------------------------------------------------------------------+
+| Khi sửa file này         | Đọc README.md, mục "Quy ước khi sửa tài liệu skill", và mục "Ghi chú cho     |
+|                          | người sửa" ở cuối file này                                                   |
++--------------------------+------------------------------------------------------------------------------+
+```
 
 Mỗi mini app là **một repo git riêng**, gắn vào host ở `packages/<tên-repo>` bằng submodule. Xem kiến trúc đầy đủ ở skill `electrogo-superapp`.
 
@@ -46,3 +55,11 @@ Quy ước đặt tên: repo `electro-go-<tên>`, package `@electrogo/<tên>`, c
 - Bước 4 và 5 chính là Phần B và Phần C của mục "Setup từ đầu" trong skill `electrogo-superapp`, có thêm bảng 5 file cần sửa ở host.
 - Mini app mới thêm xong thì push repo con trước, rồi commit `.gitmodules` và con trỏ ở host (xem skill `sync-submodules`).
 - Nếu `git submodule add` báo repo không có commit nào, repo đang trống: quay lại bước 2-3.
+
+## Ghi chú cho người sửa file này
+
+Đọc trước README.md, mục "Quy ước khi sửa tài liệu skill". Riêng file này:
+
+- Chi tiết cấu hình Rspack và 5 file cần sửa ở host ghi ở electrogo-superapp (Phần B, C). Ở đây chỉ nêu việc cần làm, không chép lại chi tiết.
+- Danh sách peerDependencies phải khớp package.json của packages/electro-go-work.
+- Không tự tạo repo GitHub hay push khi người dùng chưa đồng ý (bước 1).

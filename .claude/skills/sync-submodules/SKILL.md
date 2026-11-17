@@ -5,16 +5,29 @@ description: Cập nhật, đồng bộ và commit các mini app (git submodule)
 
 # Làm việc với submodule của ElectroGo
 
-> **Tóm tắt**
-> - **Skill này là gì:** cách đồng bộ code giữa host và các mini app (git submodule).
-> - **Dùng khi:** sửa mini app rồi cần host nhận bản mới, kéo bản mới của người khác, hoặc clone mà thiếu code.
-> - **Quy tắc quan trọng nhất:** push repo con **trước**, rồi mới commit con trỏ ở host.
-> - **Skill liên quan:** `add-mini-app` (thêm app mới), `electrogo-superapp` (kiến trúc, cách chạy server mini app), `run-ios` (chạy app).
-
-> **Khi sửa file này:** đọc trước `../README.md`, mục "Quy ước khi sửa tài liệu skill". Riêng file này:
-> - Giữ nguyên thứ tự bắt buộc: **push repo con trước, commit con trỏ ở host sau**. Không đảo trong bất kỳ ví dụ nào.
-> - Mọi lệnh và đường dẫn làm việc với `packages/` (submodule), không phải `sub/`. Đối chiếu `.gitmodules` trước khi ghi tên repo, URL.
-> - Chỉ commit hoặc push khi người dùng yêu cầu; ví dụ lệnh chỉ để minh họa, không tự chạy.
+```
++--------------------------+------------------------------------------------------------------------------+
+| TÓM TẮT                  | sync-submodules                                                              |
++==========================+==============================================================================+
+| Là gì                    | Cách đồng bộ code giữa host và các mini app (git submodule)                  |
++--------------------------+------------------------------------------------------------------------------+
+| Dùng khi                 | Sửa mini app rồi cần host nhận bản mới, kéo bản mới của người khác, hoặc     |
+|                          | clone mà thiếu code                                                          |
++--------------------------+------------------------------------------------------------------------------+
+| Quy tắc quan trọng nhất  | Push repo con TRƯỚC, rồi mới commit con trỏ ở host                           |
++--------------------------+------------------------------------------------------------------------------+
+| Các tình huống           | Clone mới hoặc thiếu code, Sửa code mini app rồi đưa lên host, Kéo bản mới   |
+|                          | của người khác, Kiểm tra trạng thái, Cạm bẫy                                 |
++--------------------------+------------------------------------------------------------------------------+
+| Skill liên quan          | add-mini-app (thêm app mới), electrogo-superapp (kiến trúc, chạy server mini |
+|                          | app), run-ios (chạy app)                                                     |
++--------------------------+------------------------------------------------------------------------------+
+| Tìm nhanh một mục        | Cmd+Shift+O rồi gõ tên mục để nhảy tới mục đó                                |
++--------------------------+------------------------------------------------------------------------------+
+| Khi sửa file này         | Đọc README.md, mục "Quy ước khi sửa tài liệu skill", và mục "Ghi chú cho     |
+|                          | người sửa" ở cuối file này                                                   |
++--------------------------+------------------------------------------------------------------------------+
+```
 
 Host chỉ ghi nhớ **một commit cụ thể** của mỗi mini app. Push ở repo con chưa đủ: phải commit ở host thì host mới trỏ sang bản mới.
 
@@ -188,3 +201,11 @@ git submodule status
 - Commit trong submodule khi đang ở detached HEAD sẽ dễ mất: chạy `git checkout main` trong repo con trước khi sửa.
 - Mini app không chứa `node_modules` riêng; luôn chạy `pnpm install` ở **thư mục gốc host**, không chạy trong từng repo con.
 - Chỉ commit hoặc push khi người dùng yêu cầu.
+
+## Ghi chú cho người sửa file này
+
+Đọc trước README.md, mục "Quy ước khi sửa tài liệu skill". Riêng file này:
+
+- Giữ nguyên thứ tự bắt buộc: push repo con trước, commit con trỏ ở host sau. Không đảo trong bất kỳ ví dụ nào.
+- Mọi lệnh và đường dẫn làm việc với packages/ (submodule), không phải sub/. Đối chiếu .gitmodules trước khi ghi tên repo, URL.
+- Chỉ commit hoặc push khi người dùng yêu cầu. Ví dụ lệnh chỉ để minh họa, không tự chạy.

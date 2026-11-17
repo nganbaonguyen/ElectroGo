@@ -59,9 +59,9 @@ Host (app React Native thật) + mini app (repo riêng, gắn bằng git submodu
 2. `add-mini-app` và `sync-submodules`: làm việc hằng ngày với mini app.
 3. `run-ios`: khi cần chạy hoặc sửa lỗi.
 
-## Quy ước khi sửa tài liệu skill (BẮT BUỘC, đọc trước khi sửa bất kỳ file nào ở đây)
+## Quy ước khi sửa tài liệu skill
 
-Đây là chuẩn chung cho cả 5 file. Mỗi `SKILL.md` chỉ ghi thêm phần riêng của nó (mục "Khi sửa file này"), không lặp lại chuẩn này.
+**BẮT BUỘC, đọc trước khi sửa bất kỳ file nào ở đây.** Đây là chuẩn chung cho cả 5 file. Mỗi `SKILL.md` chỉ ghi thêm phần riêng của nó (mục "Ghi chú cho người sửa file này" ở cuối file), không lặp lại chuẩn này.
 
 ### 1. Nội dung phải đúng với repo
 
@@ -92,7 +92,9 @@ Host (app React Native thật) + mini app (repo riêng, gắn bằng git submodu
 ### 3. Cấu trúc và cách viết
 
 - Tiếng Việt có dấu. Thuật ngữ kỹ thuật, tên lệnh, tên file giữ nguyên tiếng Anh.
-- Đầu mỗi `SKILL.md`: frontmatter (`name` trùng tên thư mục, `description` một câu nói rõ "dùng khi nào") rồi khối "Tóm tắt" (là gì, dùng khi nào, skill liên quan).
+- Đầu mỗi `SKILL.md`: frontmatter (`name` trùng tên thư mục, `description` một câu nói rõ "dùng khi nào") rồi **bảng "TÓM TẮT" kẻ khung** (là gì, dùng khi nào, các mục chính, skill liên quan, dòng "Khi sửa file này" trỏ về README). Không dùng khối trích dẫn `>`, `**đậm**` hay link ở phần đầu: người đọc xem file thô trong editor, các ký hiệu này rất rối mắt, và link `#mục` không bấm được trong editor.
+- Cuối mỗi `SKILL.md`: mục "Ghi chú cho người sửa file này" (vài gạch đầu dòng, chữ thường), chứa những điều riêng của file đó. Không đặt ghi chú sửa file ở đầu file.
+- Ưu tiên chữ thường dễ đọc ở dạng thô: hạn chế `**đậm**` và backtick dày đặc trong cùng một câu.
 - Cây thư mục, sơ đồ luồng, lệnh: đặt trong code block. Lệnh dùng ` ```bash ` và có comment ngắn.
 - Viết ngắn, từng bước đánh số, mỗi bước có chỗ "xong khi" hoặc "kết quả đúng" nếu kiểm tra được.
 - Thêm hoặc xóa skill thì cập nhật bảng mục lục ở đầu file này.
