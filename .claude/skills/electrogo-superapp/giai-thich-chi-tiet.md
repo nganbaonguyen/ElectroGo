@@ -719,8 +719,7 @@ A6. Manifest và remote entry khác nhau thế nào?
 
 B1. Khi người dùng bấm một ô, chuyện gì xảy ra?
   Trả lời theo mục 4: Home báo RootNavigator, MiniAppHost vào trạng thái loading, loadMiniApp
-  kiểm tra manifest rồi import('work/App'), Module Federation tải container và chunk, host
-  đưa React cho mini app, component được trả về, MiniAppHost chuyển sang ready và vẽ mini app
+  kiểm tra manifest rồi import('work/App'), Module Federation tải container và chunk (Chunk là một phần mã nguồn được đóng gói (bundle)), host đưa React cho mini app, component được trả về, MiniAppHost chuyển sang ready và vẽ mini app
   với initialRoute.
 
 B2. Host biết gì về mini app?
@@ -744,6 +743,64 @@ B6. Dev và production khác nhau ở đâu?
   Dev: mỗi mini app một server Re.Pack (cổng 9001, 9002), địa chỉ localhost (Android là
   10.0.2.2). Production: file tĩnh trên CDN, địa chỉ lấy từ biến môi trường
   WORK_REMOTE_URL, SALE_REMOTE_URL lúc build host.
+
+B7. Hãy kể các bước để setup một super app.
+  Nói theo 5 bước, mỗi bước có một mốc để biết là xong (bảng bên dưới). Thứ tự không đổi được:
+  phải có host chạy trước, rồi mới có chỗ để nạp mini app.
+
+  Bước 1. Dựng host. Tạo một app React Native thật (có ios/ và android/). Cài Re.Pack,
+  Rspack và Module Federation để thay Metro. Trong rspack.config.mjs khai báo bảng REMOTES
+  (tên mini app, cổng, biến môi trường), ba thư viện dùng chung kiểu singleton (react,
+  react-native, safe-area-context), và bật enablePackageExports. Chạy pod install một lần vì
+  Re.Pack có module native. Thiết lập pnpm workspace với node-linker=hoisted để các package
+  ở packages/ tìm được thư viện cài ở gốc.
+
+  Bước 2. Dựng mini app. Mỗi mini app là một repo riêng, chỉ có JS, không có ios/ android/.
+  Cấu hình Rspack ở vai remote: name trùng khóa trong REMOTES, filename riêng cho container,
+  exposes './App', và shared cùng ba thư viện nhưng import: false để luôn dùng bản của host.
+  Sau đó gắn vào host bằng git submodule ở packages/.
+
+  Bước 3. Nối mini app vào host. Sửa 5 chỗ ở host: REMOTES, khai báo kiểu (remotes.d.ts), bảng
+  LOADERS (remotes.ts), MiniAppKey, và dòng icon trên Home (miniApps.ts). Tên phải khớp xuyên
+  suốt, vì hai bên không import của nhau mà chỉ thống nhất bằng chuỗi.
+
+  Bước 4. Chạy thử. Mỗi server một terminal: host cổng 8081, mini app cổng 9001, 9002. Mở app
+  trên máy ảo, bấm ô trên Home để kiểm tra luồng nạp. Tắt server mini app để kiểm tra màn lỗi
+  có nút Thử lại.
+
+  Bước 5. Production. Build bundle mini app ra file tĩnh, đưa lên CDN, rồi đặt biến
+  WORK_REMOTE_URL, SALE_REMOTE_URL khi build host. Từ đó cập nhật mini app chỉ là đưa file mới
+  lên CDN, không phải phát hành lại host.
+
+  Nói thêm nếu được hỏi sâu: super app có hai kiểu. Kiểu modular (mọi chức năng là thư mục
+  trong một dự án, một bundle, phát hành chung) thì đơn giản hơn nhiều. ElectroGo chọn kiểu
+  federated vì cần mini app phát hành độc lập. Danh sách việc của kiểu modular (điều hướng,
+  state, xác thực, CI/CD...) xem mục 24.2.
+
+  Chi tiết từng lệnh và từng dòng cấu hình nằm ở SKILL.md, phần "Setup từ đầu" (Phần A đến E).
+  Ở đây chỉ cần nhớ khung 5 bước và lý do của chúng.
+
+```
++-------+--------------------------------------------------+--------------------------------------------+
+| Bước  | Việc                                             | Xong khi                                   |
++=======+==================================================+============================================+
+| 1     | Dựng host: app React Native thật, cài Re.Pack,   | pnpm start:dev chạy ở cổng 8081, app mở    |
+|       | Rspack, Module Federation, cấu hình              | được Home                                  |
+|       | rspack.config.mjs                                |                                            |
++-------+--------------------------------------------------+--------------------------------------------+
+| 2     | Dựng mini app: repo riêng, chỉ có JS, cấu hình   | pnpm start:module chạy, mf-manifest.json   |
+|       | rspack remote (name, filename, exposes, shared)  | trả về JSON                                |
++-------+--------------------------------------------------+--------------------------------------------+
+| 3     | Nối mini app vào host: khai báo địa chỉ, kiểu,   | Bấm ô trên Home thì vào được mini app      |
+|       | bảng nạp, icon trên Home                         |                                            |
++-------+--------------------------------------------------+--------------------------------------------+
+| 4     | Chạy thử: một server cho host, mỗi mini app một  | Sửa mini app, mở lại ô là thấy thay đổi    |
+|       | server, app trên máy ảo                          |                                            |
++-------+--------------------------------------------------+--------------------------------------------+
+| 5     | Production: build bundle mini app, đưa lên CDN,  | Cập nhật mini app mà không phát hành lại   |
+|       | trỏ biến WORK_REMOTE_URL                         | host                                       |
++-------+--------------------------------------------------+--------------------------------------------+
+```
 
 ### Nhóm C. Xử lý lỗi và độ bền
 
