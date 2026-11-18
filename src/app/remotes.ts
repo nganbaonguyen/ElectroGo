@@ -1,5 +1,7 @@
 import {ComponentType} from 'react';
+import {loadRemote, registerRemotes} from '@module-federation/enhanced/runtime';
 import {MiniAppKey} from '../features/home';
+import {isDeployEnabled, resolveManifestUrl} from './deploy';
 
 const PROBE_TIMEOUT_MS = 4000;
 
@@ -32,18 +34,42 @@ async function ensureReachable(key: MiniAppKey): Promise<void> {
   }
 }
 
+type MiniAppModule = {default: ComponentType<MiniAppProps>};
+
+/**
+ * Nạp mini app theo bản LIVE trên web phân phối: hỏi web địa chỉ manifest hiện tại, đăng ký lại remote
+ * với địa chỉ đó (force: thay địa chỉ cũ) rồi nạp. Nhờ vậy đổi bản LIVE trên web là app nạp bản mới,
+ * không cần build lại host.
+ */
+async function loadFromDeploy(key: MiniAppKey): Promise<MiniAppModule> {
+  const entry = await resolveManifestUrl(key);
+  registerRemotes([{name: key, entry}], {force: true});
+  const mod = await loadRemote<MiniAppModule>(`${key}/App`);
+  if (!mod) {
+    throw new Error(`Không nạp được mini app "${key}" (${entry})`);
+  }
+  return mod;
+}
+
 /**
  * Bảng nạp mini app: khóa -> hàm import động (Module Federation).
+ * Có DEPLOY_API_URL (bản build phát hành) thì nạp bản LIVE từ web; không có thì nạp từ địa chỉ cố định (dev).
  * Mini app được tải từ server của nó lúc người dùng bấm vào ô trên Home, không nằm sẵn trong bundle host.
  * Thêm mini app mới: thêm dòng ở đây, khai báo kiểu trong src/types/remotes.d.ts và thêm remote
  * vào rspack.config.mjs.
  */
 const LOADERS: Record<MiniAppKey, () => Promise<{default: ComponentType<MiniAppProps>}>> = {
   work: async () => {
+    if (isDeployEnabled()) {
+      return loadFromDeploy('work');
+    }
     await ensureReachable('work');
     return import('work/App');
   },
   sale: async () => {
+    if (isDeployEnabled()) {
+      return loadFromDeploy('sale');
+    }
     await ensureReachable('sale');
     return import('sale/App');
   },

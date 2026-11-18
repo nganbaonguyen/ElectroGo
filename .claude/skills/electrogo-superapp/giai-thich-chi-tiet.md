@@ -10,11 +10,11 @@
 | Khác gì SKILL.md  | SKILL.md là tài liệu làm việc (setup, quy tắc). File này giải thích vì sao, hoạt     |
 |                   | động thế nào, kèm câu hỏi phỏng vấn và gợi ý trả lời                                 |
 +-------------------+--------------------------------------------------------------------------------------+
-| Gồm hai phần      | Phần I (mục 1 đến 13): dự án ElectroGo. Phần II (mục 14 đến 27): kiến thức React     |
+| Gồm hai phần      | Phần I (mục 1 đến 13A): dự án ElectroGo. Phần II (mục 14 đến 27): kiến thức React    |
 |                   | Native chung, đã sửa từ ghi chú cá nhân                                              |
 +-------------------+--------------------------------------------------------------------------------------+
-| Cách đọc          | Hỏi về dự án: mục 1, 3, 4, 7, 9, 10. Hỏi về React Native chung: đọc mục 14 trước,    |
-|                   | rồi theo chủ đề trong mục lục                                                        |
+| Cách đọc          | Hỏi về dự án: mục 1, 3, 4, 7, 9, 10, 13A. Hỏi về React Native chung: đọc mục 14      |
+|                   | trước, rồi theo chủ đề trong mục lục                                                 |
 +-------------------+--------------------------------------------------------------------------------------+
 | Tìm nhanh một mục | Cmd+Shift+O rồi gõ số mục hoặc tên mục                                               |
 +-------------------+--------------------------------------------------------------------------------------+
@@ -50,6 +50,8 @@
 +------+------------+------------------------------------------------------------------------+
 | I    | 11, 12, 13 | Thuật ngữ, các con số, cách vẽ sơ đồ                                   |
 +------+------------+------------------------------------------------------------------------+
+| I    | 13A        | Phát hành qua web: upload tar, tích LIVE, build apk/aab/ipa            |
++------+------------+------------------------------------------------------------------------+
 | II   | 14         | Bảng sửa nhanh: ghi chú gốc cần chỉnh                                  |
 +------+------------+------------------------------------------------------------------------+
 | II   | 15         | React cơ bản: lifecycle, hooks, useEffect, memo                        |
@@ -80,7 +82,7 @@
 +------+------------+------------------------------------------------------------------------+
 ```
 
-# PHẦN I. DỰ ÁN ELECTROGO (mục 1 đến 13)
+# PHẦN I. DỰ ÁN ELECTROGO (mục 1 đến 13A)
 
 ## 1. Câu trả lời ngắn: nói được trong 30 giây và 2 phút
 
@@ -243,6 +245,9 @@ Lúc production, bỏ 2 server mini app, thay bằng file tĩnh trên CDN:
                        ---- SALE_REMOTE_URL ---->  CDN: sale/ios/mf-manifest.json
   Cập nhật mini app = đưa file mới lên CDN. Không phải phát hành lại host.
 ```
+
+Thực tế dự án đang dùng một web phân phối riêng thay cho CDN: host không giữ địa chỉ cố định mà hỏi web
+"bản LIVE là bản nào" mỗi lần mở mini app. Xem mục 13A.
 
 Ai biết gì về ai:
 
@@ -623,6 +628,29 @@ chỉ import feature khác qua index.ts (cổng công khai).
 |                                            | án chưa kiểm chứng 2.x  |                                   |
 |                                            | chạy được               |                                   |
 +--------------------------------------------+-------------------------+-----------------------------------+
+| Máy thật báo không kết nối được tới        | App build không có      | Build bằng pnpm build:android     |
+| 10.0.2.2:9001                              | DEPLOY_API_URL nên dùng | hoặc build:ios (tự nhúng địa chỉ  |
+|                                            | địa chỉ dev             | web)                              |
++--------------------------------------------+-------------------------+-----------------------------------+
+| Android Release báo Network request failed | Release chặn http; cờ   | Đặt cờ bằng Variant API trong     |
+| dù đã có địa chỉ web                       | đặt trong buildTypes bị | build.gradle, kiểm tra manifest   |
+|                                            | plugin RN ghi đè        | trong APK                         |
++--------------------------------------------+-------------------------+-----------------------------------+
+| Xcode Archive lỗi Unable to resolve module | Xcode đóng gói JS bằng  | Export CLI_PATH trỏ               |
+| work/App                                   | Metro, không hiểu mini  | react-native/cli.js trong         |
+|                                            | app nạp động            | ios/.xcode.env                    |
++--------------------------------------------+-------------------------+-----------------------------------+
+| Gradle lỗi verifyReleaseResources ở một    | assembleRelease không   | Chạy :app:assembleRelease         |
+| thư viện                                   | chỉ định module nên     | :app:bundleRelease                |
+|                                            | chạy cả thư viện        |                                   |
++--------------------------------------------+-------------------------+-----------------------------------+
+| Build Android xong vẫn mang địa chỉ web cũ | Gradle không coi biến   | Thêm --rerun cho                  |
+|                                            | môi trường là đầu vào,  | createBundleReleaseJsAndAssets    |
+|                                            | dùng lại bundle JS cũ   |                                   |
++--------------------------------------------+-------------------------+-----------------------------------+
+| Web từ chối file tar: không phải bundle    | Upload tar mã nguồn do  | Dùng pnpm build, tar phải có ios/ |
+|                                            | pnpm build:src          | và android/                       |
++--------------------------------------------+-------------------------+-----------------------------------+
 ```
 
 ## 9. Điểm yếu thật và hướng cải tiến
@@ -654,9 +682,9 @@ sau, kèm hướng xử lý, sẽ ghi điểm hơn là nói mọi thứ đều �
 | đều tải                          | được khi offline                  | trước (prefetch) mini app hay     |
 |                                  |                                   | dùng                              |
 +----------------------------------+-----------------------------------+-----------------------------------+
-| Không có rollback                | Đưa bản hỏng lên CDN thì mọi      | Lưu bản cũ trên CDN, manifest trỏ |
-|                                  | người dùng dính ngay              | tới phiên bản, quay lại bằng cách |
-|                                  |                                   | đổi con trỏ                       |
+| Rollback còn thủ công            | Tích LIVE lại bản cũ được, nhưng  | Thêm kiểm tra bản mới rồi tự về   |
+|                                  | app không tự quay lại khi bản mới | bản trước                         |
+|                                  | làm lỗi                           |                                   |
 +----------------------------------+-----------------------------------+-----------------------------------+
 | Dữ liệu vẫn là mock              | Chưa kiểm chứng với API thật      | Nối API thật, giữ cờ useMock cho  |
 |                                  |                                   | môi trường dev                    |
@@ -669,8 +697,13 @@ sau, kèm hướng xử lý, sẽ ghi điểm hơn là nói mọi thứ đều �
 |                                  | không có animation                | cần (cài ở host, mini app dùng    |
 |                                  |                                   | chung)                            |
 +----------------------------------+-----------------------------------+-----------------------------------+
-| Chưa xác định nơi đặt bundle     | Chưa có URL thật cho              | Chọn CDN, quy trình CI build rồi  |
-| production                       | WORK_REMOTE_URL                   | tải lên                           |
+| Web phân phối chỉ chạy trong     | Địa chỉ nằm trong app nên đổi     | Máy chủ cố định có https; cho đổi |
+| mạng LAN, dùng http              | mạng phải build lại host; Android | địa chỉ không cần build lại       |
+|                                  | phải bật cleartext                |                                   |
++----------------------------------+-----------------------------------+-----------------------------------+
+| Web phân phối chưa có đăng nhập  | Ai vào được cũng upload bundle và | Thêm đăng nhập, phân quyền và ký  |
+|                                  | đặt LIVE; bundle chạy thẳng trong | bundle                            |
+|                                  | app                               |                                   |
 +----------------------------------+-----------------------------------+-----------------------------------+
 ```
 
@@ -841,8 +874,9 @@ D3. Vấn đề bảo mật khi nạp mã từ mạng?
   signing của Re.Pack để host chỉ chạy bundle đã ký.
 
 D4. Làm sao cập nhật và rollback mini app?
-  Cập nhật: build, đưa file mới lên CDN, không cần phát hành host. Rollback: giữ bản cũ trên
-  CDN, manifest hoặc địa chỉ trỏ về bản cũ.
+  Cập nhật: pnpm build ra file tar, upload lên web phân phối, tích LIVE cho phiên bản mới, không cần
+  phát hành host. Rollback: tích LIVE lại bản cũ (mỗi bản nằm thư mục riêng nên không mất). Chi tiết ở
+  mục 13A và nhóm E.
 
 D5. Dùng chung đăng nhập giữa các mini app thế nào?
   Host giữ phiên, truyền token hoặc đối tượng ngữ cảnh qua props (như đang truyền
@@ -860,6 +894,40 @@ D8. Test thế nào?
   Mỗi tầng test được riêng: service (mock), hook, màn hình. Với luồng nạp, mock loadMiniApp
   để test 3 trạng thái của MiniAppHost (loading, ready, error). Hiện test mới ở mức tối
   thiểu, đây là chỗ nên bổ sung.
+
+### Nhóm E. Phát hành và cập nhật
+
+E1. Làm sao cập nhật mini app mà người dùng không phải cài lại app?
+  Build bundle (pnpm build ra file tar), upload lên web phân phối, tích LIVE cho phiên bản mới. App
+  host không chứa mã mini app: mỗi lần mở ô, nó hỏi web "bản LIVE là bản nào" rồi nạp đúng bản đó.
+  Người dùng chỉ cần mở lại mini app.
+
+E2. App biết bản nào đang LIVE bằng cách nào?
+  Hình dung: web bỏ thư vào hòm, app tự mở hòm xem mỗi lần cần; web không bấm chuông báo.
+  Không có kênh đẩy từ web xuống app. Checkbox LIVE chỉ đổi một trường trong registry.json trên web.
+  App gọi GET .../bundles/work/resolve?platform=ios&env=live, web đọc registry rồi trả manifestUrl của
+  bản LIVE. Host đăng ký lại remote với địa chỉ đó (registerRemotes, force) rồi nạp (loadRemote).
+
+E3. Rollback thế nào?
+  Tích LIVE ở bản cũ rồi Lưu. Muốn chặn hẳn một bản thì tắt Active: web trả 403 cho bản đó. Hạn chế
+  thật: chưa tự động quay lại khi bản mới làm app lỗi.
+
+E4. Khi nào vẫn phải build lại host?
+  Khi đổi native (thư viện, icon, quyền), khi đổi địa chỉ web (địa chỉ được nhúng lúc build), và khi
+  tăng số phiên bản gửi lên store. Mini app chỉ là JS nên đổi nó thì không cần.
+
+E5. Kể một lỗi thật khi nối app với web phân phối.
+  Ba lớp lỗi cùng một triệu chứng "không tải được mini app". Lớp 1: app trên máy thật báo
+  10.0.2.2:9001 vì bản build thiếu DEPLOY_API_URL nên dùng đường dev; sửa bằng script tự tìm và nhúng
+  địa chỉ. Lớp 2: có địa chỉ rồi vẫn Network request failed vì Android Release chặn http và cờ cho
+  phép bị plugin React Native ghi đè; sửa bằng Variant API. Lớp 3: Xcode Archive đóng gói bằng Metro nên
+  không hiểu work/App; sửa bằng CLI_PATH. Bài học: kiểm tra thẳng trong file build (chuỗi trong bundle,
+  manifest của APK) thay vì đoán.
+
+E6. Rủi ro bảo mật của cách này?
+  Bundle là mã chạy trong app: ai upload được thì chạy được mã trên mọi máy đang dùng. Web hiện chưa có
+  đăng nhập và chạy http trong LAN. Cần https, đăng nhập, ký bundle. Quy định của Apple và Google về
+  mã tải lúc chạy chưa được kiểm tra, không nên khẳng định chắc trong phỏng vấn.
 
 ## 11. Bảng thuật ngữ
 
@@ -901,6 +969,20 @@ D8. Test thế nào?
 +-------------------------+------------------------------------------------------------+
 | 10.0.2.2                | Địa chỉ trong Android emulator trỏ về máy tính             |
 +-------------------------+------------------------------------------------------------+
+| LIVE                    | Phiên bản mini app đang phục vụ người dùng, chọn bằng      |
+|                         | checkbox trên web                                          |
++-------------------------+------------------------------------------------------------+
+| Registry                | File bundles/registry.json trên web: ghi phiên bản, cờ     |
+|                         | STAGING, PROD, Active và bản LIVE                          |
++-------------------------+------------------------------------------------------------+
+| resolve                 | API web trả địa chỉ manifest của bản LIVE; app gọi mỗi lần |
+|                         | mở mini app                                                |
++-------------------------+------------------------------------------------------------+
+| DEPLOY_API_URL          | Địa chỉ web nhúng vào app lúc build                        |
++-------------------------+------------------------------------------------------------+
+| Cleartext               | Cho phép kết nối http thường; Android Release mặc định     |
+|                         | chặn                                                       |
++-------------------------+------------------------------------------------------------+
 ```
 
 ## 12. Các con số cần nhớ
@@ -931,6 +1013,14 @@ D8. Test thế nào?
 +--------------------------------------+-------------------------------------------+
 | Node                                 | từ 22.11 trở lên                          |
 +--------------------------------------+-------------------------------------------+
+| Cổng web phân phối                   | 8080                                      |
++--------------------------------------+-------------------------------------------+
+| Thời gian chờ hỏi web (resolve)      | 6 giây                                    |
++--------------------------------------+-------------------------------------------+
+| Giới hạn file upload (tar, apk, ipa) | 500 MB                                    |
++--------------------------------------+-------------------------------------------+
+| Môi trường app hỏi web mặc định      | live                                      |
++--------------------------------------+-------------------------------------------+
 ```
 
 ## 13. Cách vẽ trên bảng trong 1 phút
@@ -943,6 +1033,164 @@ Khi được yêu cầu "vẽ kiến trúc", vẽ theo 4 bước:
 3. Vẽ mũi tên từ Host sang mini app, ghi: "manifest, container, chunk (lúc người dùng bấm)".
 4. Vẽ mũi tên ngược lại, ghi: "React, React Native (shared, singleton)". Rồi nói câu chốt:
    "Host chỉ biết địa chỉ, mini app chỉ biết mình expose gì, nên hai bên phát hành độc lập."
+
+## 13A. Phát hành qua web phân phối: upload tar, tích LIVE, build host
+
+Mục này giải thích vì sao và hoạt động thế nào. Các bước làm và bảng lỗi nằm ở skill release-deploy.
+
+### 13A.1 Bài toán
+
+Module Federation cho phép host nạp mã mini app lúc chạy, nhưng chưa nói "bản nào đang được phục vụ".
+Cần một nơi vừa lưu các phiên bản bundle, vừa ghi bản nào đang LIVE. Web phân phối (thư mục
+web-deployment-apk, tách khỏi repo ElectroGo) làm hai việc đó, và đồng thời phân phối file APK, IPA của
+chính app host.
+
+### 13A.2 Ba bên
+
+```
++------------------------------+----------------------------------------+----------------------------------+
+| Bên                          | Giữ gì                                 | Làm gì                           |
++==============================+========================================+==================================+
+| Mini app (repo riêng)        | Mã nguồn                               | pnpm build ra file tar chứa ios/ |
+|                              |                                        | và android/                      |
++------------------------------+----------------------------------------+----------------------------------+
+| Web phân phối (máy bạn, cổng | Bundle đã giải nén theo ứng dụng,      | Nhận upload, đổi LIVE, trả địa   |
+| 8080)                        | module, phiên bản; registry.json ghi   | chỉ manifest của bản LIVE        |
+|                              | bản LIVE                               |                                  |
++------------------------------+----------------------------------------+----------------------------------+
+| App host (điện thoại)        | Địa chỉ web (nhúng lúc build). Không   | Hỏi web bản LIVE, nạp bản đó     |
+|                              | giữ mã mini app                        | bằng Module Federation           |
++------------------------------+----------------------------------------+----------------------------------+
+```
+
+Web và mini app không biết mã của nhau: web không biết mini app làm gì, mini app không biết web tồn tại.
+Host là bên duy nhất biết cả hai, và hợp đồng giữa chúng chỉ là địa chỉ manifest mà web trả về.
+
+### 13A.3 Vì sao tích LIVE có tác dụng
+
+App không "nhìn thấy" checkbox, và web không đẩy gì xuống app. Checkbox LIVE chỉ đổi trường live trong
+bundles/registry.json. Tác dụng đến từ việc app hỏi lại web mỗi lần mở một mini app
+(src/app/deploy.ts):
+
+```
+  const url = `${apiUrl}${base}/bundles/${key}/resolve?platform=${Platform.OS}&env=${env}`;
+  const res = await fetch(url, {signal: controller.signal});   // chờ tối đa 6 giây
+  ...
+  return data.manifestUrl;
+```
+
+Rồi src/app/remotes.ts đăng ký lại remote với địa chỉ vừa nhận và nạp:
+
+```
+  const entry = await resolveManifestUrl(key);
+  registerRemotes([{name: key, entry}], {force: true});
+  const mod = await loadRemote<MiniAppModule>(`${key}/App`);
+```
+
+Cách làm này thay cho import('work/App') tĩnh. Import tĩnh bị biên dịch với địa chỉ manifest cố định lúc
+build host. registerRemotes với force: true thay địa chỉ đó ngay lúc chạy, nên đổi LIVE trên web là đổi bản
+được nạp mà không build lại host. Lỗi (web không trả lời, chưa có bản LIVE, bản bị tắt Active) được ném ra
+thành Promise bị từ chối, MiniAppHost hiện màn báo lỗi có nút Thử lại, giống các lỗi tải ở mục 4.
+
+Chỉ bản build có DEPLOY_API_URL mới đi đường này. Chạy dev (pnpm start:dev) không có biến đó nên vẫn nạp từ
+địa chỉ cố định 9001, 9002.
+
+Hình dung dễ nhớ: tích LIVE trên web giống bỏ một lá thư vào hòm thư. Cách đang dùng là app tự ra mở hòm thư
+xem có thư mới mỗi khi cần (app kéo, pull), chứ không phải bưu tá đến bấm chuông báo mỗi khi có thư (web đẩy,
+push). Thư đã nằm sẵn trong hòm, nhưng app chỉ biết khi nó mở hòm ra xem, tức là lúc người dùng bấm vào ô
+mini app.
+
+Web không gửi "action" nào cho app khi bạn tích LIVE. Mô hình là app tự kéo (pull), không phải web đẩy (push).
+Hệ quả: người dùng đang mở sẵn một mini app sẽ vẫn thấy bản cũ cho tới lần mở mini app kế tiếp; bản mới có
+hiệu lực từ lần bấm ô sau đó. Chọn cách này vì đơn giản và không cần giữ kết nối hay dịch vụ thông báo. Muốn
+app biết ngay thì có các cách sau (chưa cách nào được làm):
+
+```
++------------------------------------+------------------------------------------+--------------------------+
+| Cách app biết có bản mới           | Cách hoạt động                           | Hiện trạng               |
++====================================+==========================================+==========================+
+| Kéo mỗi lần mở mini app            | App gọi resolve mỗi lần bấm ô trên Home  | Đang dùng                |
++------------------------------------+------------------------------------------+--------------------------+
+| Kéo khi app quay lại màn hình      | Gọi resolve khi app từ nền lên, báo hoặc | Chưa làm                 |
+|                                    | tải lại nếu bản đổi                      |                          |
++------------------------------------+------------------------------------------+--------------------------+
+| Web giữ kết nối và đẩy (SSE,       | Web gửi sự kiện "module X đổi LIVE" cho  | Chưa làm                 |
+| WebSocket)                         | app đang mở                              |                          |
++------------------------------------+------------------------------------------+--------------------------+
+| Thông báo đẩy (APNs, FCM)          | Web gửi thông báo, app nhận cả khi đang  | Chưa làm, cần dịch vụ    |
+|                                    | ở nền                                    | đẩy thông báo            |
++------------------------------------+------------------------------------------+--------------------------+
+```
+
+### 13A.4 Vì sao chunk tải đúng chỗ
+
+mf-manifest.json của bản build production ghi publicPath là noop:/// (giá trị mặc định của Re.Pack, vì lúc
+build chưa biết sẽ đặt bundle ở đâu). Lúc chạy, ResolverPlugin của Re.Pack (dist/modules/
+FederationRuntimePlugins/ResolverPlugin.js, hàm rebaseRemoteUrl) đổi địa chỉ từng chunk sang cùng thư mục với
+địa chỉ manifest. Nghĩa là chỉ cần manifest ở đúng chỗ, các chunk nằm cạnh nó. Đó là lý do web giữ nguyên
+cấu trúc ios/ và android/ và để mỗi phiên bản một thư mục riêng.
+
+### 13A.5 Nhiều ứng dụng trên một web
+
+```
++------------------+------------------------------------+--------------------------------------------------+
+|                  | ElectroGo (mặc định)               | Ứng dụng khác (vd Hypertech)                     |
++==================+====================================+==================================================+
+| Kho APK, IPA     | uploads/                           | uploads/apps/<mã>/                               |
++------------------+------------------------------------+--------------------------------------------------+
+| Bundle mini app  | bundles/                           | bundles/_apps/<mã>/                              |
++------------------+------------------------------------+--------------------------------------------------+
+| API              | /api/...                           | /api/apps/<mã>/...                               |
++------------------+------------------------------------+--------------------------------------------------+
+| URL bundle       | /bundles/<module>/<ver>/...        | /bundles/_apps/<mã>/<module>/<ver>/...           |
++------------------+------------------------------------+--------------------------------------------------+
+```
+
+ElectroGo giữ chỗ lưu và đường dẫn cũ để link APK đã gửi cho người khác và dữ liệu đang có vẫn dùng được.
+Chọn ứng dụng ở sidebar thì cả hai tab (APK/IPA và Bundle mini app) chuyển sang dữ liệu của ứng dụng đó.
+Mỗi ứng dụng có danh sách module khai báo riêng.
+
+### 13A.6 Build host: vì sao phải nhúng địa chỉ
+
+Địa chỉ web được nhúng vào app lúc build (DefinePlugin chèn __DEPLOY_CONFIG__ trong rspack.config.mjs, đọc
+từ DEPLOY_API_URL, DEPLOY_APP_ID, DEPLOY_ENV). Hệ quả: đổi mạng hoặc đổi IP thì phải build lại host. Để
+không ai quên đặt biến, scripts/deploy-url.sh tự tìm địa chỉ (hỏi web đang chạy ở cổng 8080, hoặc dùng IP
+LAN), in ra địa chỉ đã nhúng và dừng nếu không xác định được. Bản build không có địa chỉ này nạp từ địa chỉ
+dev và thất bại trên máy thật (xem các lỗi thật ở mục 8).
+
+Hai file ra từ pnpm build:android: .apk (cài trực tiếp, upload web) và .aab (Google Play, cần khóa upload
+riêng). pnpm build:ios ra .ipa ký bằng team trong scripts/build.local.env; với chứng chỉ Development hiện có
+thì chỉ cài được lên máy đã đăng ký UDID.
+
+### 13A.7 Đã kiểm chứng gì, còn hạn chế gì
+
+Đã kiểm chứng: trên iOS simulator (bản Release), khi tắt web app báo lỗi có nút Thử lại; khi bỏ tích LIVE
+app báo "Chưa có bản LIVE"; tích lại thì mini app hiện ra. Điện thoại Android chạy được sau khi build bằng
+script mới (theo xác nhận của bạn). Các hạn chế còn lại:
+
+```
++----------------------------+--------------------------------------------+--------------------------------+
+| Hạn chế                    | Hiện trạng                                 | Hướng xử lý                    |
++============================+============================================+================================+
+| Bảo mật web                | Chưa đăng nhập, chạy http trong LAN        | Đăng nhập, https, ký bundle    |
++----------------------------+--------------------------------------------+--------------------------------+
+| Địa chỉ web đổi theo mạng  | Nằm trong app, đổi mạng phải build lại     | Máy chủ có địa chỉ cố định     |
+|                            | host                                       |                                |
++----------------------------+--------------------------------------------+--------------------------------+
+| Đổi LIVE khi app đang mở   | Chưa kiểm chứng việc mở lại mini app trong | Kiểm thử và xóa bộ nhớ đệm của |
+|                            | cùng lần chạy; nếu còn thấy bản cũ thì tắt | remote                         |
+|                            | hẳn app                                    |                                |
++----------------------------+--------------------------------------------+--------------------------------+
+| Bản mới lỗi                | Chưa tự quay về bản trước                  | Kiểm tra sức khỏe rồi tự       |
+|                            |                                            | rollback                       |
++----------------------------+--------------------------------------------+--------------------------------+
+| Đưa lên store              | AAB cần khóa upload riêng; iOS mới có      | Tạo khóa upload, chứng chỉ     |
+|                            | chứng chỉ Development                      | Distribution                   |
++----------------------------+--------------------------------------------+--------------------------------+
+| Quy định Apple, Google     | Chưa kiểm tra quy định về tải mã lúc chạy  | Đọc quy định hiện hành trước   |
+|                            |                                            | khi phát hành                  |
++----------------------------+--------------------------------------------+--------------------------------+
+```
 
 # PHẦN II. KIẾN THỨC REACT NATIVE CHUNG (mục 14 đến 27)
 
@@ -1954,6 +2202,9 @@ So sánh với ElectroGo:
 
 Hai cách có thể dùng cùng nhau.
 
+Trong ElectroGo: cập nhật mini app đi qua web phân phối (upload tar, tích LIVE), không dùng OTA của store; xem
+mục 13A.
+
 ## 24. Kiến trúc và Super App
 
 ### 24.1 Hai kiểu super app
@@ -2274,7 +2525,7 @@ Quan trọng: chỉ nói con số thật. Ví dụ mẫu trong ghi chú gốc (5
 
 - Đây là tài liệu ôn phỏng vấn, viết cho người cần hiểu và giải thích được. Giữ giọng giải
   thích dễ hiểu, có ví dụ, không rút gọn thành bullet khô.
-- Phần I (mục 1 đến 13): mọi đoạn code, tên file, con số phải lấy từ repo thật. Đổi code ở
+- Phần I (mục 1 đến 13A): mọi đoạn code, tên file, con số phải lấy từ repo thật. Đổi code ở
   rspack.config.mjs, remotes.ts, RootNavigator.tsx thì sửa lại mục 4, 5 và 12.
 - Phần II (mục 14 đến 27): kiến thức chung. Khi thêm ghi chú mới, kiểm chứng trước. Nếu ghi
   chú gốc sai hoặc lỗi thời thì ghi vào bảng sửa nhanh ở mục 14, rồi viết lại cho đúng ở
@@ -2283,6 +2534,9 @@ Quan trọng: chỉ nói con số thật. Ví dụ mẫu trong ghi chú gốc (5
   số thật của dự án.
 - Chỗ nào phụ thuộc phiên bản hoặc ngày tháng (Flipper, CodePush, Dynamic Links, OWASP, New
   Architecture) thì nên kiểm tra lại khi đọc sau một thời gian.
+- Mục 13A giải thích hệ phát hành (web phân phối, LIVE, build host). Đổi src/app/deploy.ts, remotes.ts,
+  scripts/build-*.sh, scripts/deploy-url.sh hoặc API của web thì sửa mục 13A, bảng lỗi ở mục 8 và skill
+  release-deploy. Các bước làm chỉ ghi ở release-deploy, ở đây chỉ giải thích vì sao.
 - Thông tin setup từng bước và quy tắc nằm ở SKILL.md. Ở đây chỉ giải thích vì sao và cách
   hoạt động.
 - Bảng dùng dạng kẻ khung theo README, sơ đồ nằm trong code block thụt lề 2 khoảng trắng.

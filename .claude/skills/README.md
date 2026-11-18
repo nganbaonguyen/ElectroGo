@@ -2,7 +2,7 @@
 
 Mỗi skill nằm trong một thư mục riêng và file bên trong luôn tên `SKILL.md` (bắt buộc). **Tên thư mục chính là tên skill.**
 
-## 4 skill
+## 5 skill
 
 ```
 +---------------------+---------------------+------------------------------+-------------------------------+
@@ -21,6 +21,11 @@ Mỗi skill nằm trong một thư mục riêng và file bên trong luôn tên `
 | run-ios             | /run-ios            | Muốn chạy app lên máy ảo     | Lệnh chạy iOS/Android, UDID   |
 |                     |                     | hoặc gặp lỗi build           | simulator, bảng lỗi thường    |
 |                     |                     |                              | gặp                           |
++---------------------+---------------------+------------------------------+-------------------------------+
+| release-deploy      | /release-deploy     | Cập nhật mini app không phát | Upload tar lên web phân phối, |
+|                     |                     | hành lại host, build         | tích LIVE, build host, bảng   |
+|                     |                     | apk/aab/ipa, app Release     | lỗi phát hành                 |
+|                     |                     | không tải được mini app      |                               |
 +---------------------+---------------------+------------------------------+-------------------------------+
 ```
 
@@ -49,6 +54,13 @@ Mỗi skill nằm trong một thư mục riêng và file bên trong luôn tên `
 | Chạy app, hoặc sửa lỗi build/không tải được mini   | run-ios                                             |
 | app                                                |                                                     |
 +----------------------------------------------------+-----------------------------------------------------+
+| Cập nhật mini app cho người dùng mà không build    | release-deploy, mục "Cập nhật một mini app"         |
+| lại host (upload tar, tích LIVE)                   |                                                     |
++----------------------------------------------------+-----------------------------------------------------+
+| Build file apk, aab, ipa của app host              | release-deploy, mục "Build app host"                |
++----------------------------------------------------+-----------------------------------------------------+
+| App Release trên máy thật không tải được mini app  | release-deploy, mục "Lỗi thường gặp"                |
++----------------------------------------------------+-----------------------------------------------------+
 ```
 
 ## Hệ thống chạy ra sao (tóm tắt một dòng)
@@ -60,10 +72,11 @@ Host (app React Native thật) + mini app (repo riêng, gắn bằng git submodu
 1. `electrogo-superapp`: hiểu tổng thể.
 2. `add-mini-app` và `sync-submodules`: làm việc hằng ngày với mini app.
 3. `run-ios`: khi cần chạy hoặc sửa lỗi.
+4. `release-deploy`: khi cần đưa bản mới cho người dùng (upload bundle, build apk/aab/ipa).
 
 ## Quy ước khi sửa tài liệu skill
 
-**BẮT BUỘC, đọc trước khi sửa bất kỳ file nào ở đây.** Đây là chuẩn chung cho cả 5 file và file giai-thich-chi-tiet.md. Mỗi `SKILL.md` chỉ ghi thêm phần riêng của nó (mục "Ghi chú cho người sửa file này" ở cuối file), không lặp lại chuẩn này.
+**BẮT BUỘC, đọc trước khi sửa bất kỳ file nào ở đây.** Đây là chuẩn chung cho cả 6 file và file giai-thich-chi-tiet.md. Mỗi `SKILL.md` chỉ ghi thêm phần riêng của nó (mục "Ghi chú cho người sửa file này" ở cuối file), không lặp lại chuẩn này.
 
 ### 1. Nội dung phải đúng với repo
 
@@ -75,6 +88,7 @@ Host (app React Native thật) + mini app (repo riêng, gắn bằng git submodu
   - thêm mini app mới: `add-mini-app`
   - thao tác submodule: `sync-submodules`
   - lỗi build, lệnh chạy máy ảo: `run-ios`
+  - phát hành: upload bundle lên web phân phối, tích LIVE, build .apk/.aab/.ipa của host: `release-deploy`
 
 ### 2. Bảng: luôn kẻ khung, không dùng bảng markdown
 

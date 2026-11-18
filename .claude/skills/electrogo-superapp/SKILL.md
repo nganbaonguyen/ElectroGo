@@ -22,8 +22,11 @@ description: Kiến trúc và cách setup super app ElectroGo (host + mini app e
 | Ôn phỏng vấn             | Đọc giai-thich-chi-tiet.md (cùng thư mục): vì sao, hoạt động thế nào, câu    |
 |                          | hỏi phỏng vấn kèm gợi ý trả lời                                              |
 +--------------------------+------------------------------------------------------------------------------+
+| Phát hành                | Upload bundle mini app lên web phân phối rồi tích LIVE, build .apk/.aab/.ipa |
+|                          | của host: skill release-deploy                                               |
++--------------------------+------------------------------------------------------------------------------+
 | Skill liên quan          | add-mini-app (thêm app con), sync-submodules (đồng bộ), run-ios (chạy app,   |
-|                          | lỗi build)                                                                   |
+|                          | lỗi build), release-deploy (phát hành)                                       |
 +--------------------------+------------------------------------------------------------------------------+
 | Tìm nhanh một mục        | Cmd+Shift+O rồi gõ tên mục để nhảy tới mục đó                                |
 +--------------------------+------------------------------------------------------------------------------+
@@ -68,11 +71,13 @@ ElectroGo/                      host (repo chính)
 ├── pnpm-workspace.yaml         packages: ['packages/*']
 ├── package.json                scripts start / start:dev / ios / android / subs
 ├── react-native.config.js      bật lệnh Re.Pack cho `react-native start` và `bundle`
+├── scripts/                    pull-subs.sh, build-android.sh, build-ios.sh, deploy-url.sh (xem release-deploy)
 ├── rspack.config.mjs           cấu hình host: REMOTES, shared, ModuleFederationPluginV2
 ├── index.js  App.tsx           entry của host
 ├── android/  ios/              code native, CHỈ có ở host
 ├── src/
-│   ├── app/                    RootNavigator.tsx (MiniAppHost), remotes.ts (bảng nạp mini app)
+│   ├── app/                    RootNavigator.tsx (MiniAppHost), remotes.ts (bảng nạp mini app),
+│   │                           deploy.ts (hỏi web bản LIVE)
 │   ├── types/remotes.d.ts      khai báo kiểu cho module nạp động ('work/App', ...)
 │   ├── features/home/          màn Home (lưới icon), data/miniApps.ts
 │   └── shared/                 theme, components dùng chung (MiniAppLoading, MiniAppErrorView, ...)
@@ -215,6 +220,8 @@ pnpm android
 
 ### Phần E. Triển khai production (khi cần)
 
+Cách đang dùng: **web phân phối** (upload file .tar, tích LIVE, host hỏi web bản LIVE). Từng bước, build host và bảng lỗi nằm ở skill `release-deploy`. Ba bước thủ công dưới đây chỉ dùng khi không có web: đặt cứng địa chỉ bằng `WORK_REMOTE_URL`.
+
 1. Trong thư mục mini app: `pnpm build` -> `build/<tên>-<version>.tar`, chứa bundle iOS + Android (`mf-manifest.json`, `<tên>.container.js.bundle`, chunk, assets). `pnpm build:src` ra tar mã nguồn.
 2. Giải nén và đưa từng thư mục `ios/`, `android/` lên nơi lưu trữ (CDN).
 3. Khi build host, đặt `WORK_REMOTE_URL`, `SALE_REMOTE_URL` trỏ tới nơi đó (không gồm `/mf-manifest.json`, nhưng gồm phần `/<platform>`).
@@ -271,6 +278,8 @@ loadMiniApp resolve -> state = ready
    └─ <state.Component /> = WorkApp      <- từ đây là mã của mini app
 ```
 
+Bản build phát hành có `DEPLOY_API_URL` (xem `release-deploy`): bước 1 và 2 ở trên được thay bằng `resolveManifestUrl` (`src/app/deploy.ts`) hỏi web bản LIVE, rồi `registerRemotes` + `loadRemote` (`src/app/remotes.ts`) nạp địa chỉ manifest mà web trả về. Các bước 3 đến 7 giữ nguyên. Không có `DEPLOY_API_URL` (dev) thì dùng đường cũ ở trên.
+
 Sau khi vào mini app: `WorkApp -> MiniNavigator -> màn hình`. Mini app chạy **cùng app, cùng JS runtime, cùng bản React** với host, nên vẽ trực tiếp lên màn hình (không phải app khác chạy song song).
 
 ### Manifest và Remote Entry
@@ -320,6 +329,9 @@ Ba component trong `src/shared/components/` của host: `MiniAppLoading` (đang 
 - `__REMOTE_MANIFESTS__` do `DefinePlugin` chèn lúc build. Sửa `rspack.config.mjs` thì **phải khởi động lại** `pnpm start:dev`; không có biến này thì bước kiểm tra kết nối tự bỏ qua.
 - Mini app **không** có `android/`, `ios/`; **không** import mã của host hoặc của mini app khác. Code dùng chung đặt ở package `shared` (chưa có; hiện mỗi mini app giữ một bản `shared/theme.ts`).
 - Thư viện **native** chỉ cài ở host (cần `pod install` và build lại app); mini app ghi `peerDependencies` `"*"`.
+- `__DEPLOY_CONFIG__` (`apiUrl`, `appId`, `env`) do `DefinePlugin` chèn từ `DEPLOY_API_URL`, `DEPLOY_APP_ID`, `DEPLOY_ENV`. Bản Release phải có địa chỉ này (script build tự tìm và nhúng), thiếu thì điện thoại thật nạp từ địa chỉ cố định của dev (`10.0.2.2:9001`) và báo không kết nối được.
+- iOS: `ios/.xcode.env` phải giữ dòng `export CLI_PATH=...react-native/cli.js`. Thiếu thì Xcode Archive đóng gói JS bằng Metro và lỗi `Unable to resolve module work/App`.
+- Android Release chặn `http://`. Cờ `usesCleartextTraffic` đặt bằng Variant API trong `android/app/build.gradle` (biến `ELECTROGO_ALLOW_CLEARTEXT`); đặt trong `buildTypes` sẽ bị plugin React Native ghi đè.
 
 ```
 +----------------------------------------------------+-----------------------------------------------------+
@@ -442,9 +454,10 @@ Quy ước bắt buộc:
 
 ## Câu hỏi còn mở (cần chủ project xác nhận)
 
-1. Nơi triển khai bundle mini app production (CDN/URL nào) để đặt `WORK_REMOTE_URL`, `SALE_REMOTE_URL`.
+1. Nơi triển khai bundle mini app production. Hiện dùng web phân phối chạy trên máy cá nhân trong mạng LAN (http, cổng 8080). Còn mở: máy chủ có địa chỉ cố định và https cho bản phát hành thật.
 2. Có dùng chung đăng nhập và API giữa các app không? Nếu có thì tách thêm package `shared`.
 3. Có cần ký bundle (code signing của Re.Pack) khi triển khai production không?
+4. Web phân phối chưa có đăng nhập: ai vào được cũng upload bundle và đặt LIVE được, mà bundle chạy thẳng trong app của người dùng. Cần xác thực trước khi dùng thật.
 
 ## Ghi chú cho người sửa file này
 
@@ -453,4 +466,5 @@ Quy ước bắt buộc:
 - Tên phải khớp xuyên suốt: name trong rspack.config.mjs của mini app = khóa trong REMOTES của host = '<tên>/App' trong remotes.d.ts = khóa MiniAppKey.
 - Mọi số cổng (8081, 9001, 9002) và tên container phải đối chiếu rspack.config.mjs của host và của mini app.
 - Thêm bước setup thì đặt đúng phần A-E và có dòng "Xong khi".
+- Cách phát hành (web phân phối, build apk/aab/ipa) chỉ ghi ở skill `release-deploy`; ở đây chỉ trỏ tới. Đổi `src/app/deploy.ts` hoặc `remotes.ts` thì sửa đoạn "Bản build phát hành" ở mục Luồng chạy.
 - Cây thư mục phải khớp thực tế (dùng ls). packages/shared chưa có thì không vẽ vào.

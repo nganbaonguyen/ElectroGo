@@ -22,3 +22,10 @@ android/app/build/
 
 # Output build của Re.Pack (rspack.config.mjs)
 /build/
+
+# Khóa ký release (không đưa lên git)
+*.jks
+release.keystore
+android/app/.cxx/
+android/build/
+scripts/build.local.env

@@ -72,6 +72,21 @@ def enableProguardInReleaseBuilds = false
  */
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
+// Ký bản release: đọc khóa từ biến môi trường hoặc ~/.gradle/gradle.properties (KHÔNG đặt khóa trong repo).
+// Chưa cấu hình thì ký bằng debug.keystore: chạy được trên máy nhưng Google Play sẽ từ chối.
+//   ELECTROGO_KEYSTORE            đường dẫn file .keystore / .jks
+//   ELECTROGO_KEYSTORE_PASSWORD   mật khẩu keystore
+//   ELECTROGO_KEY_ALIAS           alias của khóa
+//   ELECTROGO_KEY_PASSWORD        mật khẩu khóa (bỏ trống thì dùng mật khẩu keystore)
+def signingProp = { String name -> project.findProperty(name) ?: System.getenv(name) }
+def releaseStorePath = signingProp('ELECTROGO_KEYSTORE')
+def hasReleaseKey = releaseStorePath && file(releaseStorePath).exists()
+// Release mặc định chặn http thường. Thử bundle qua web trong mạng LAN (http://IP:8080): ELECTROGO_ALLOW_CLEARTEXT=1.
+// Bản phát hành thật nên dùng https và để tắt.
+def allowCleartext = signingProp('ELECTROGO_ALLOW_CLEARTEXT') == '1'
+def appVersionCode = (signingProp('ELECTROGO_VERSION_CODE') ?: '1').toString().toInteger()
+def appVersionName = (signingProp('ELECTROGO_VERSION_NAME') ?: '1.0').toString()
+
 android {
     ndkVersion rootProject.ext.ndkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
@@ -82,8 +97,9 @@ android {
         applicationId "com.electrogo"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        // Mỗi lần đưa lên Google Play phải tăng versionCode: ELECTROGO_VERSION_CODE=2 pnpm build:android
+        versionCode appVersionCode
+        versionName appVersionName
     }
     signingConfigs {
         debug {
@@ -91,6 +107,14 @@ android {
             storePassword 'android'
             keyAlias 'androiddebugkey'
             keyPassword 'android'
+        }
+        if (hasReleaseKey) {
+            release {
+                storeFile file(releaseStorePath)
+                storePassword signingProp('ELECTROGO_KEYSTORE_PASSWORD')
+                keyAlias signingProp('ELECTROGO_KEY_ALIAS')
+                keyPassword signingProp('ELECTROGO_KEY_PASSWORD') ?: signingProp('ELECTROGO_KEYSTORE_PASSWORD')
+            }
         }
     }
     buildTypes {
@@ -100,10 +124,19 @@ android {
         release {
             // Caution! In production, you need to generate your own keystore file.
             // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
+            // Có ELECTROGO_KEYSTORE thì ký bằng khóa release, không thì dùng khóa debug (xem đầu file).
+            signingConfig hasReleaseKey ? signingConfigs.release : signingConfigs.debug
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
         }
+    }
+}
+
+// Plugin React Native đặt usesCleartextTraffic=false cho release SAU khi build.gradle này chạy, nên đặt trong
+// buildTypes bị ghi đè. Dùng Variant API (chạy sau cùng) để ELECTROGO_ALLOW_CLEARTEXT có tác dụng.
+androidComponents {
+    onVariants(selector().withBuildType("release")) { variant ->
+        variant.manifestPlaceholders.put("usesCleartextTraffic", allowCleartext ? "true" : "false")
     }
 }
 

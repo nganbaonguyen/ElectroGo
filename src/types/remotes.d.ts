@@ -13,5 +13,8 @@ declare module 'sale/App' {
   export default SaleApp;
 }
 
+/** Cấu hình web phân phối bundle (DEPLOY_API_URL, DEPLOY_APP_ID, DEPLOY_ENV), do rspack.config.mjs chèn lúc build. */
+declare const __DEPLOY_CONFIG__: {apiUrl: string; appId: string; env: 'live' | 'prod' | 'staging'};
+
 /** Địa chỉ mf-manifest.json của từng mini app, do rspack.config.mjs (DefinePlugin) chèn lúc build. */
 declare const __REMOTE_MANIFESTS__: Record<'work' | 'sale', string>;

@@ -44,6 +44,14 @@ export default Repack.defineRspackConfig(env => {
     Object.entries(remotes).map(([name, entry]) => [name, entry.slice(entry.indexOf('@') + 1)]),
   );
 
+  // Web phân phối bundle (web-deployment-apk). Có DEPLOY_API_URL thì app hỏi web bản LIVE của mini app;
+  // bỏ trống thì nạp từ địa chỉ cố định ở REMOTES (dev). Ví dụ: DEPLOY_API_URL=https://deploy.example.com
+  const deployConfig = {
+    apiUrl: (process.env.DEPLOY_API_URL ?? '').replace(/\/+$/, ''),
+    appId: process.env.DEPLOY_APP_ID ?? 'electrogo',
+    env: ['live', 'prod', 'staging'].includes(process.env.DEPLOY_ENV) ? process.env.DEPLOY_ENV : 'live',
+  };
+
   return {
     mode,
     context: __dirname,
@@ -59,7 +67,10 @@ export default Repack.defineRspackConfig(env => {
     },
     plugins: [
       new Repack.RepackPlugin(),
-      new rspack.DefinePlugin({__REMOTE_MANIFESTS__: JSON.stringify(manifestUrls)}),
+      new rspack.DefinePlugin({
+        __REMOTE_MANIFESTS__: JSON.stringify(manifestUrls),
+        __DEPLOY_CONFIG__: JSON.stringify(deployConfig),
+      }),
       new Repack.plugins.ModuleFederationPluginV2({
         name: 'host',
         dts: false,
