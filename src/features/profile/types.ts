@@ -10,24 +10,7 @@ export type ProfileUser = {
 
 export type ContactItem = {label: string; value: string};
 
-export type Experience = {
-  role: string;
-  company: string;
-  period: string;
-  highlights: string[];
-};
-
-export type Education = {
-  title: string;
-  place: string;
-  period: string;
-};
-
 export type ProfileInfo = {
   title: string;
-  summary: string;
   contacts: ContactItem[];
-  skills: string[];
-  experiences: Experience[];
-  education: Education[];
 };
