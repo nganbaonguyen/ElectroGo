@@ -1,19 +1,21 @@
 import React from 'react';
-import {Image, StyleSheet, Text, View} from 'react-native';
+import {Image, ImageSourcePropType, StyleSheet, Text, View} from 'react-native';
 import {colors} from '../theme';
 
 type Props = {
   name: string;
   uri?: string;
+  source?: ImageSourcePropType; // ảnh local (require), ưu tiên hơn uri
   size?: number;
 };
 
 /** Ảnh đại diện; nếu không có ảnh thì hiện chữ cái đầu của tên. */
-export default function Avatar({name, uri, size = 48}: Props) {
+export default function Avatar({name, uri, source, size = 48}: Props) {
   const box = {width: size, height: size, borderRadius: size / 2};
 
-  if (uri) {
-    return <Image source={{uri}} style={[styles.base, box]} />;
+  const imageSource = source ?? (uri ? {uri} : undefined);
+  if (imageSource) {
+    return <Image source={imageSource} style={[styles.base, box]} />;
   }
 
   const initial = name.trim().split(' ').pop()?.charAt(0).toUpperCase() ?? '?';

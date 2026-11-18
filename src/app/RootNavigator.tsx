@@ -8,7 +8,8 @@ import {
   View,
 } from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {HomeScreen, MiniAppItem} from '../features/home';
+import {HomeScreen, MiniAppItem, MOCK_USER} from '../features/home';
+import {ProfileScreen} from '../features/profile';
 import {SplashScreen} from '../features/splash';
 import MiniAppErrorBoundary from '../shared/components/MiniAppErrorBoundary';
 import MiniAppErrorView from '../shared/components/MiniAppErrorView';
@@ -30,6 +31,7 @@ export default function RootNavigator() {
   const insets = useSafeAreaInsets();
   const [tab, setTab] = useState<TabKey>('home');
   const [miniApp, setMiniApp] = useState<MiniAppItem | null>(null);
+  const [showProfile, setShowProfile] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
   const hideSplash = useCallback(() => setShowSplash(false), []);
 
@@ -40,6 +42,11 @@ export default function RootNavigator() {
     return <MiniAppHost item={miniApp} onClose={() => setMiniApp(null)} topInset={insets.top} />;
   }
 
+  // Hồ sơ cá nhân chiếm toàn màn hình, mở khi bấm ảnh đại diện ở Home.
+  if (showProfile) {
+    return <ProfileScreen user={MOCK_USER} onClose={() => setShowProfile(false)} />;
+  }
+
   const current = TABS.find(t => t.key === tab)!;
 
   return (
@@ -48,7 +55,10 @@ export default function RootNavigator() {
       <StatusBar barStyle={tab === 'home' ? 'light-content' : 'dark-content'} />
       <View style={styles.content}>
         {tab === 'home' ? (
-          <HomeScreen onOpenMiniApp={setMiniApp} />
+          <HomeScreen
+            onOpenMiniApp={setMiniApp}
+            onPressAvatar={() => setShowProfile(true)}
+          />
         ) : (
           <PlaceholderScreen title={current.label} icon={current.iconActive} />
         )}

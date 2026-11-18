@@ -1,4 +1,5 @@
 import type {ComponentProps} from 'react';
+import type {ImageSourcePropType} from 'react-native';
 import type {Ionicons} from '@react-native-vector-icons/ionicons/static';
 
 /** Khóa định danh của mỗi mini app. Thêm mini app mới thì thêm khóa vào đây. */
@@ -22,5 +23,6 @@ export type CurrentUser = {
   employeeId: string;
   fullName: string;
   avatarUri?: string;
+  avatar?: ImageSourcePropType; // ảnh local, ưu tiên hơn avatarUri
   storeCode: string;
 };

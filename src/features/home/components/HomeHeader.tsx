@@ -8,6 +8,7 @@ import {CurrentUser} from '../types';
 
 type Props = {
   user: CurrentUser;
+  onPressAvatar?: () => void;
   onPressStore?: () => void;
   onPressSettings?: () => void;
   onPressSearch?: () => void;
@@ -15,6 +16,7 @@ type Props = {
 
 export default function HomeHeader({
   user,
+  onPressAvatar,
   onPressStore,
   onPressSettings,
   onPressSearch,
@@ -28,7 +30,18 @@ export default function HomeHeader({
       <View style={[styles.glow, styles.glowSmall]} />
 
       <View style={styles.row}>
-        <Avatar name={user.fullName} uri={user.avatarUri} size={52} />
+        <Pressable
+          onPress={onPressAvatar}
+          accessibilityRole="button"
+          accessibilityLabel="Xem hồ sơ cá nhân"
+          style={({pressed}) => pressed && styles.pressed}>
+          <Avatar
+            name={user.fullName}
+            source={user.avatar}
+            uri={user.avatarUri}
+            size={52}
+          />
+        </Pressable>
 
         <View style={styles.info}>
           <Text style={styles.greeting}>Xin chào,</Text>

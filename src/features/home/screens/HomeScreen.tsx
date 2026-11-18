@@ -9,12 +9,13 @@ import {MiniAppItem} from '../types';
 
 type Props = {
   onOpenMiniApp: (item: MiniAppItem) => void;
+  onPressAvatar?: () => void;
 };
 
-export default function HomeScreen({onOpenMiniApp}: Props) {
+export default function HomeScreen({onOpenMiniApp, onPressAvatar}: Props) {
   return (
     <View style={styles.container}>
-      <HomeHeader user={MOCK_USER} />
+      <HomeHeader user={MOCK_USER} onPressAvatar={onPressAvatar} />
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.heading}>Tính năng</Text>
         <MiniAppGrid

@@ -1,3 +1,4 @@
+import {AVATAR} from '../../../assets/images';
 import {CurrentUser} from '../types';
 
 /**
@@ -8,4 +9,5 @@ export const MOCK_USER: CurrentUser = {
   employeeId: '165616',
   fullName: 'Nguyễn Bảo Ngân',
   storeCode: 'ST: 907',
+  avatar: AVATAR,
 };
