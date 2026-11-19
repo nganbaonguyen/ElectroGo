@@ -1565,6 +1565,124 @@ Ghi chú thêm:
 - Ở chế độ dev có StrictMode (React 18 trở lên), effect được chạy hai lần để lộ lỗi quên dọn
   dẹp. Đó không phải bug.
 
+### 15.3A Vòng đời Class Component chi tiết
+
+React làm việc theo hai pha. Hiểu hai pha này thì nhớ được vì sao mỗi phương thức nằm ở đâu.
+
+```
++---------------+------------------------------------+-----------------------------------------------+
+| Pha           | Việc đang làm                      | Được phép làm gì                              |
++===============+====================================+===============================================+
+| Render        | Tính xem UI trông thế nào          | Chỉ tính toán thuần. Không gọi API, không đổi |
+|               |                                    | thứ gì bên ngoài. React có thể gọi lại hoặc   |
+|               |                                    | bỏ dở pha này                                 |
++---------------+------------------------------------+-----------------------------------------------+
+| Commit        | Áp thay đổi lên màn hình           | An toàn để chạy tác dụng phụ (side effect):   |
+|               |                                    | gọi API, đăng ký listener, đo view            |
++---------------+------------------------------------+-----------------------------------------------+
+```
+
+Thứ tự gọi:
+
+```
+  MOUNT (xuất hiện lần đầu)
+    constructor -> getDerivedStateFromProps -> render
+        -> [React vẽ lên màn hình] -> componentDidMount
+
+  UPDATE (props đổi, gọi setState hoặc forceUpdate)
+    getDerivedStateFromProps -> shouldComponentUpdate -> render
+        -> getSnapshotBeforeUpdate -> [React cập nhật màn hình] -> componentDidUpdate
+
+  UNMOUNT (biến mất)
+    componentWillUnmount
+
+  LỖI khi con render
+    getDerivedStateFromError (đổi state để hiện màn lỗi) -> componentDidCatch (ghi log)
+```
+
+Vai trò từng phương thức:
+
+```
++--------------------------------+--------------+-------------------------------+--------------------------+
+| Phương thức                    | Pha          | Dùng để làm gì                | Lưu ý                    |
++================================+==============+===============================+==========================+
+| constructor                    | render       | Khởi tạo state                | Không gọi API ở đây.     |
+|                                |              |                               | Thường viết thẳng state  |
+|                                |              |                               | = {...}                  |
++--------------------------------+--------------+-------------------------------+--------------------------+
+| getDerivedStateFromProps       | render       | Tính state từ props (hàm      | Rất ít dùng; thường tính |
+|                                |              | static)                       | thẳng trong render       |
++--------------------------------+--------------+-------------------------------+--------------------------+
+| shouldComponentUpdate          | render       | Trả false để bỏ qua lần       | PureComponent làm sẵn;   |
+|                                |              | render lại                    | function dùng React.memo |
++--------------------------------+--------------+-------------------------------+--------------------------+
+| render                         | render       | Trả về UI                     | Phải thuần: không        |
+|                                |              |                               | setState, không gọi API  |
++--------------------------------+--------------+-------------------------------+--------------------------+
+| getSnapshotBeforeUpdate        | trước commit | Đọc thông tin từ view cũ (ví  | Rất ít dùng; kết quả     |
+|                                |              | dụ vị trí cuộn)               | truyền cho               |
+|                                |              |                               | componentDidUpdate       |
++--------------------------------+--------------+-------------------------------+--------------------------+
+| componentDidMount              | commit       | Gọi API, đăng ký listener,    | Chạy một lần, sau lần vẽ |
+|                                |              | bắt đầu timer                 | đầu                      |
++--------------------------------+--------------+-------------------------------+--------------------------+
+| componentDidUpdate(prevProps,  | commit       | Làm việc khi props hoặc state | Phải so với prevProps    |
+| prevState)                     |              | đổi                           | rồi mới gọi API, không   |
+|                                |              |                               | thì lặp vô hạn           |
++--------------------------------+--------------+-------------------------------+--------------------------+
+| componentWillUnmount           | commit       | Dọn dẹp: hủy listener, timer, | Không gọi setState ở đây |
+|                                |              | request                       |                          |
++--------------------------------+--------------+-------------------------------+--------------------------+
+| getDerivedStateFromError       | render       | Bắt lỗi của component con,    | Hàm static; chỉ class    |
+|                                |              | đổi state để hiện màn lỗi     | làm được                 |
++--------------------------------+--------------+-------------------------------+--------------------------+
+| componentDidCatch              | commit       | Ghi log lỗi (Sentry,          | Không dùng để đổi UI     |
+|                                |              | Crashlytics)                  |                          |
++--------------------------------+--------------+-------------------------------+--------------------------+
+```
+
+Ba phương thức cũ componentWillMount, componentWillReceiveProps, componentWillUpdate đã bị React coi là không an
+toàn (có bản đổi tên thêm tiền tố UNSAFE_), vì React có thể gọi chúng nhiều lần khi render dở dang. Code mới không dùng.
+
+Ví dụ class điển hình, tải dữ liệu theo userId:
+
+```
+  class UserScreen extends React.Component {
+    state = {user: null};
+    cancelled = false;
+
+    componentDidMount() {
+      this.load();
+    }
+    componentDidUpdate(prevProps) {
+      if (prevProps.userId !== this.props.userId) {   // phải so sánh, không thì lặp vô hạn
+        this.load();
+      }
+    }
+    componentWillUnmount() {
+      this.cancelled = true;                          // dọn dẹp
+    }
+    async load() {
+      const user = await fetchUser(this.props.userId);
+      if (!this.cancelled) this.setState({user});
+    }
+    render() { /* ... */ }
+  }
+```
+
+Error boundary: vì sao bắt buộc là class và không bắt được gì
+
+- Chỉ class mới viết được error boundary (getDerivedStateFromError, componentDidCatch). Hiện chưa có hook
+  tương đương. Thư viện react-error-boundary cũng chỉ bọc một class bên trong.
+- Error boundary bắt lỗi xảy ra lúc render, trong vòng đời và trong constructor của component con.
+- Nó KHÔNG bắt: lỗi trong event handler (onPress), code bất đồng bộ (promise, setTimeout) và lỗi ngay trong chính
+  boundary. Những lỗi này phải tự try/catch hoặc đưa vào state.
+
+Trong ElectroGo: toàn bộ class component còn lại đều là error boundary: MiniAppErrorBoundary ở host
+(src/shared/components/MiniAppErrorBoundary.tsx, chỉ dùng getDerivedStateFromError để đổi state, nút Thử lại gọi
+setState({error: null})) và ErrorBoundary trong từng mini app. Lỗi tải mini app xảy ra bên trong promise nên
+boundary không bắt được; vì vậy MiniAppHost tự giữ trạng thái loading, ready, error bằng useState (xem 15.4A).
+
 ### 15.4 useEffect và vòng đời của nó
 
 useEffect dùng cho tác dụng phụ (side effect): gọi API, đăng ký listener, timer, theo dõi
@@ -1599,6 +1717,132 @@ Ví dụ có dọn dẹp:
 
 Trong ElectroGo: hook useAsync và MiniAppHost đều dùng cờ cancelled trong cleanup để không
 setState sau khi component đã gỡ.
+
+### 15.4A Function Component: cách nghĩ đúng về useEffect
+
+Khác biệt gốc so với class: mỗi lần render, function chạy lại từ đầu và tạo ra một "ảnh chụp" props, state của
+lần đó. Effect và cleanup của lần render đó chỉ nhìn thấy giá trị của đúng lần đó (closure). Class thì khác: this
+là một đối tượng sống lâu, đọc this.props luôn ra giá trị mới nhất.
+
+Thứ tự trong một vòng đời:
+
+```
+  Mount:    render -> [React vẽ] -> effect chạy
+  Update:   render -> [React vẽ] -> cleanup của lần trước -> effect mới (chỉ nếu dependency đổi)
+  Unmount:  cleanup cuối cùng
+```
+
+Đối chiếu class và function:
+
+```
++--------------------------------+------------------------------------+------------------------------------+
+| Mục đích                       | Class Component                    | Function Component                 |
++================================+====================================+====================================+
+| Chạy một lần sau khi hiện lên  | componentDidMount                  | useEffect(fn, [])                  |
++--------------------------------+------------------------------------+------------------------------------+
+| Chạy khi giá trị X đổi         | componentDidUpdate, so với         | useEffect(fn, [X])                 |
+|                                | prevProps                          |                                    |
++--------------------------------+------------------------------------+------------------------------------+
+| Dọn dẹp khi biến mất hoặc      | componentWillUnmount               | Hàm return trong useEffect         |
+| trước lần chạy kế              |                                    |                                    |
++--------------------------------+------------------------------------+------------------------------------+
+| Bỏ qua render thừa             | shouldComponentUpdate,             | React.memo, useMemo, useCallback   |
+|                                | PureComponent                      |                                    |
++--------------------------------+------------------------------------+------------------------------------+
+| Giữ giá trị giữa các lần       | this.field                         | useRef                             |
+| render, không gây render       |                                    |                                    |
++--------------------------------+------------------------------------+------------------------------------+
+| Bắt lỗi của component con      | getDerivedStateFromError           | Chưa có hook, vẫn dùng class       |
++--------------------------------+------------------------------------+------------------------------------+
+```
+
+Lưu ý: useEffect(fn, [X]) chạy cả ở lần đầu, còn componentDidUpdate thì không. Muốn bỏ qua lần đầu thì dùng
+một useRef làm cờ.
+
+Các bẫy hay gặp (phần hay bị hỏi phỏng vấn):
+
+```
++--------------------------------+----------------------------------+--------------------------------------+
+| Bẫy hay gặp                    | Hậu quả                          | Cách tránh                           |
++================================+==================================+======================================+
+| Dùng biến trong effect nhưng   | Effect thấy giá trị cũ (stale    | Khai báo đủ; bật lint react-         |
+| không khai báo trong mảng      | closure)                         | hooks/exhaustive-deps                |
+| dependency                     |                                  |                                      |
++--------------------------------+----------------------------------+--------------------------------------+
+| Đưa object, mảng hoặc hàm tạo  | Effect chạy lại mỗi lần render;  | Đưa vào trong effect, hoặc bọc       |
+| mới mỗi lần render vào         | nếu effect gọi setState thì lặp  | useMemo, useCallback, hoặc dùng giá  |
+| dependency                     | vô hạn                           | trị nguyên thủy                      |
++--------------------------------+----------------------------------+--------------------------------------+
+| Quên cleanup (timer, listener, | Rò rỉ bộ nhớ, setState sau khi   | Luôn return hàm dọn dẹp (xem 17.4)   |
+| subscription)                  | đã unmount                       |                                      |
++--------------------------------+----------------------------------+--------------------------------------+
+| Gọi API không xử lý race       | Hai request chồng nhau, kết quả  | Cờ cancelled trong cleanup, hoặc     |
+| condition                      | cũ về sau đè kết quả mới         | AbortController                      |
++--------------------------------+----------------------------------+--------------------------------------+
+| Truyền thẳng hàm async vào     | async trả về Promise, mà React   | Khai báo hàm async bên trong effect  |
+| useEffect                      | cần hàm dọn dẹp hoặc undefined   | rồi gọi nó                           |
++--------------------------------+----------------------------------+--------------------------------------+
+| setState trong effect mà state | Render lặp vô hạn                | Kiểm tra dependency; tính trong      |
+| đó nằm trong dependency        |                                  | render nếu tính được                 |
++--------------------------------+----------------------------------+--------------------------------------+
+```
+
+Mẫu chuẩn: tải dữ liệu có dọn dẹp, tránh race condition:
+
+```
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      const user = await fetchUser(userId);
+      if (!cancelled) setUser(user);        // bỏ qua kết quả của lần gọi đã bị thay thế
+    }
+    load();
+    return () => { cancelled = true; };     // chạy trước lần effect kế tiếp và khi unmount
+  }, [userId]);
+```
+
+Không phải việc gì cũng cần effect:
+
+- Giá trị tính được từ props hoặc state thì tính thẳng trong lúc render (hoặc useMemo), không đặt vào state rồi
+  đồng bộ bằng effect.
+- Việc xảy ra do người dùng bấm (gửi form, gọi API khi nhấn nút) thì đặt trong event handler, không đặt trong effect.
+- Muốn reset state khi một prop đổi thì dùng key cho component, thay vì effect.
+
+Ở chế độ dev, StrictMode (React 18 trở lên) chạy mount, unmount, mount một lần để lộ cleanup còn thiếu. Nếu
+effect chạy hai lần mà hỏng thì lỗi nằm ở cleanup, không phải ở StrictMode.
+
+Ví dụ thật trong ElectroGo:
+
+```
++------------------------------------------+-------------------------------------------------------------+
+| Nơi                                      | Điểm đáng nói                                               |
++==========================================+=============================================================+
+| useAsync trong mini app                  | Cờ cancelled trong cleanup để không setState sau khi gỡ. Có |
+| (src/shared/hooks/useAsync.ts)           | thêm biến tick: gọi reload là đổi tick nên effect chạy lại. |
+|                                          | Dòng eslint-disable exhaustive-deps là có chủ ý vì fn là    |
+|                                          | hàm tạo mới mỗi render; đánh đổi là người gọi phải tự       |
+|                                          | truyền đúng deps                                            |
++------------------------------------------+-------------------------------------------------------------+
+| MiniAppHost (src/app/RootNavigator.tsx)  | Dependency là item.app và attempt. Bấm Thử lại làm attempt  |
+|                                          | tăng nên effect chạy lại; cleanup của lần trước đặt         |
+|                                          | cancelled = true để kết quả cũ không ghi đè. Tải lỗi nằm    |
+|                                          | trong promise nên không dùng error boundary được            |
++------------------------------------------+-------------------------------------------------------------+
+| useStack trong mini app                  | Đăng ký BackHandler hardwareBackPress, cleanup là           |
+| (src/shared/navigation/useStack.ts)      | sub.remove(). Dependency là depth và pop: ngăn xếp đổi thì  |
+|                                          | gỡ listener cũ rồi đăng ký lại, không để listener dư        |
++------------------------------------------+-------------------------------------------------------------+
+| BuildStamp trong mini app                | setTimeout 5 giây rồi làm mờ nhãn; cleanup là clearTimeout  |
+| (src/shared/components/BuildStamp.tsx)   | nên nếu màn hình bị gỡ trước 5 giây thì không còn timer     |
+|                                          | chạy ngầm                                                   |
++------------------------------------------+-------------------------------------------------------------+
+| MiniNavigator                            | Chỉ render màn hiện tại (một switch theo current.name). Mở  |
+| (src/app/navigation/MiniNavigator.tsx)   | màn mới thì màn trước unmount và cleanup chạy; quay lại thì |
+|                                          | mount lại và effect chạy lại, nên màn đó tải lại dữ liệu.   |
+|                                          | Với React Navigation thì khác: màn cũ vẫn mounted, phải     |
+|                                          | dùng useFocusEffect                                         |
++------------------------------------------+-------------------------------------------------------------+
+```
 
 ### 15.5 Các hook hay hỏi
 
@@ -2635,6 +2879,27 @@ Quan trọng: chỉ nói con số thật. Ví dụ mẫu trong ghi chú gốc (5
 | useEffect khác useLayoutEffect?           | useEffect chạy sau khi vẽ, không chặn. useLayoutEffect chạy  |
 |                                           | trước khi vẽ, chặn UI                                        |
 +-------------------------------------------+--------------------------------------------------------------+
+|                                           | shouldComponentUpdate, render, componentDidUpdate. Unmount:  |
+|                                           | componentWillUnmount                                         |
++-------------------------------------------+--------------------------------------------------------------+
+| useEffect thay thế lifecycle nào?         | Cả ba: mount (dependency rỗng), update (dependency đổi),     |
+|                                           | unmount (hàm cleanup)                                        |
++-------------------------------------------+--------------------------------------------------------------+
+| Cleanup của useEffect chạy khi nào?       | Trước lần chạy effect kế tiếp (nếu dependency đổi) và khi    |
+|                                           | unmount                                                      |
++-------------------------------------------+--------------------------------------------------------------+
+| Vì sao error boundary phải là class?      | Chưa có hook tương đương getDerivedStateFromError và         |
+|                                           | componentDidCatch                                            |
++-------------------------------------------+--------------------------------------------------------------+
+| Error boundary không bắt được lỗi nào?    | Lỗi trong event handler, code bất đồng bộ (promise,          |
+|                                           | setTimeout) và lỗi ngay trong chính boundary                 |
++-------------------------------------------+--------------------------------------------------------------+
+| Vì sao effect chạy hai lần ở dev?         | StrictMode chạy mount, unmount, mount để lộ cleanup còn      |
+|                                           | thiếu. Chỉ ở dev                                             |
++-------------------------------------------+--------------------------------------------------------------+
+| Race condition khi gọi API trong effect?  | Dùng cờ cancelled trong cleanup hoặc AbortController để bỏ   |
+|                                           | kết quả của lần gọi cũ                                       |
++-------------------------------------------+--------------------------------------------------------------+
 | Bridge khác JSI?                          | Bridge: bất đồng bộ, serialize JSON. JSI: gọi trực tiếp C++  |
 |                                           | hoặc native, không cần JSON                                  |
 +-------------------------------------------+--------------------------------------------------------------+
@@ -2702,7 +2967,10 @@ Quan trọng: chỉ nói con số thật. Ví dụ mẫu trong ghi chú gốc (5
 - Không đưa số liệu giả vào ví dụ trả lời (ví dụ "giảm từ 4 giây xuống 1,5 giây"). Chỉ dùng
   số thật của dự án.
 - Chỗ nào phụ thuộc phiên bản hoặc ngày tháng (Flipper, CodePush, Dynamic Links, OWASP, New
-  Architecture) thì nên kiểm tra lại khi đọc sau một thời gian.
+  Architecture, việc error boundary chưa có hook tương đương ở mục 15.3A) thì nên kiểm tra lại khi đọc sau một
+  thời gian.
+- Mục 15.3A và 15.4A (vòng đời class, useEffect) có ví dụ lấy từ code thật: MiniAppErrorBoundary, MiniAppHost,
+  useAsync, useStack, BuildStamp, MiniNavigator. Đổi các file này thì kiểm tra lại bảng ví dụ ở 15.4A.
 - Mục 13A giải thích hệ phát hành (web phân phối, LIVE, build host, GitHub Pages ở 13A.8). Đổi src/app/deploy.ts,
   remotes.ts, scripts/build-*.sh, scripts/deploy-url.sh, server/pages.js hoặc API của web thì sửa mục 13A, bảng
   lỗi ở mục 8 và skill release-deploy. Các bước làm chỉ ghi ở release-deploy, ở đây chỉ giải thích vì sao.
