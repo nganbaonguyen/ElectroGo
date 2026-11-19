@@ -20,11 +20,14 @@ const REMOTES = {
 };
 
 // Thư viện dùng chung giữa host và remote: phải là một bản duy nhất (singleton).
+// Danh sách đọc từ federation.shared trong package.json; các mini app cũng đọc danh sách này khi build.
 const shared = Object.fromEntries(
-  ['react', 'react-native', 'react-native-safe-area-context'].map(name => [
-    name,
-    {singleton: true, eager: true, requiredVersion: pkg.dependencies[name]},
-  ]),
+  (pkg.federation?.shared ?? []).map(name => {
+    if (!pkg.dependencies[name]) {
+      throw new Error(`federation.shared có "${name}" nhưng package.json chưa khai báo trong dependencies`);
+    }
+    return [name, {singleton: true, eager: true, requiredVersion: pkg.dependencies[name]}];
+  }),
 );
 
 export default Repack.defineRspackConfig(env => {

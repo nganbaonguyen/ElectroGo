@@ -10,8 +10,17 @@
     "test": "jest",
     "subs": "bash scripts/pull-subs.sh",
     "start:dev": "react-native start",
+    "solo:work": "pnpm --dir packages/electro-go-work solo",
+    "solo:sale": "pnpm --dir packages/electro-go-sale solo",
     "build:android": "bash scripts/build-android.sh",
     "build:ios": "bash scripts/build-ios.sh"
+  },
+  "federation": {
+    "shared": [
+      "react",
+      "react-native",
+      "react-native-safe-area-context"
+    ]
   },
   "dependencies": {
     "@module-federation/enhanced": "2.9.3",

@@ -54,6 +54,12 @@ Mỗi skill nằm trong một thư mục riêng và file bên trong luôn tên `
 | Chạy app, hoặc sửa lỗi build/không tải được mini   | run-ios                                             |
 | app                                                |                                                     |
 +----------------------------------------------------+-----------------------------------------------------+
+| Chạy riêng một mini app (không qua Home của host)  | run-ios, mục "Chạy riêng một mini app (solo)"       |
++----------------------------------------------------+-----------------------------------------------------+
+| Thêm thư viện mới cho mini app, hoặc nâng version  | electrogo-superapp, mục "Thư viện dùng chung        |
+| thư viện dùng chung                                | (federation.shared)"; thứ tự phát hành: release-    |
+|                                                    | deploy                                              |
++----------------------------------------------------+-----------------------------------------------------+
 | Cập nhật mini app cho người dùng mà không build    | release-deploy, mục "Cập nhật một mini app"         |
 | lại host (upload tar, tích LIVE)                   |                                                     |
 +----------------------------------------------------+-----------------------------------------------------+

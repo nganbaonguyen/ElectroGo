@@ -132,6 +132,29 @@ API (dùng khi cần gọi tay hoặc viết thêm công cụ):
 
 Rollback: tick LIVE ở bản cũ rồi Lưu. Chặn khẩn cấp một bản: tắt công tắc Active của bản đó.
 
+### Khi bản mini app mới cần thư viện mới
+
+Chỉ nâng version hoặc sửa code JS thì làm đúng 5 bước trên, host không bị ảnh hưởng. Thư viện nào cài ở đâu: xem mục "Thư viện dùng chung" của `electrogo-superapp`. Ở đây chỉ ghi thứ tự phát hành:
+
+```
++----------------------------------------------------+-----------------------------------------------------+
+| Bản mới của mini app cần                           | Thứ tự                                              |
++====================================================+=====================================================+
+| Thư viện JS thuần (chỉ mini app dùng)              | Cài vào mini app, build tar, upload, tích LIVE.     |
+|                                                    | Không đụng host                                     |
++----------------------------------------------------+-----------------------------------------------------+
+| Thư viện native, hoặc thư viện mới chưa có ở host  | 1. Thêm vào host, pod install, tăng                 |
+|                                                    | ELECTROGO_VERSION_NAME và _CODE, build apk/aab/ipa  |
+|                                                    | và đưa lên store. 2. Chờ người dùng cập nhật app.   |
+|                                                    | 3. Mới upload tar mini app và tích LIVE             |
++----------------------------------------------------+-----------------------------------------------------+
+| Nâng bản react-native hoặc thư viện dùng chung     | Phát hành host mới, thử cả work và sale trên host   |
+|                                                    | đó, rồi mới tích LIVE                               |
++----------------------------------------------------+-----------------------------------------------------+
+```
+
+Làm ngược (tích LIVE trước khi người dùng có host mới) thì host cũ nạp mini app mới và lỗi vì thiếu phần native. Hiện host không kiểm tra version nên chưa có gì chặn; phải tự canh thứ tự này. Mini app khác (không dùng thư viện mới) không cần build lại hay tích LIVE lại.
+
 Module phải khai báo trước (nút "Khai báo module"); `work` và `sale` đã có sẵn ở ứng dụng ElectroGo. Mã module phải trùng tên remote trong host (rspack.config.mjs, bảng REMOTES).
 
 ## Ý nghĩa các ô

@@ -16,7 +16,7 @@ description: Chạy ElectroGo lên iOS simulator (hoặc Android emulator) và x
 +--------------------------+------------------------------------------------------------------------------+
 | Lệnh nhanh               | pnpm ios --udid 4DC1F4E3-2A4A-47D5-9E24-7AD54E541D18                         |
 +--------------------------+------------------------------------------------------------------------------+
-| Các mục                  | iOS, Android, Lỗi thường gặp, Lưu ý                                          |
+| Các mục                  | iOS, Android, Chạy riêng một mini app (solo), Lỗi thường gặp, Lưu ý          |
 +--------------------------+------------------------------------------------------------------------------+
 | Skill liên quan          | electrogo-superapp (kiến trúc, setup), sync-submodules (clone thiếu code     |
 |                          | mini app)                                                                    |
@@ -56,6 +56,28 @@ Bấm ô trên Home mà thấy "Không tải được ..." nghĩa là server min
 
 Mở Android Emulator từ Android Studio, kiểm tra `adb devices`, rồi `pnpm android`.
 
+## Chạy riêng một mini app (solo)
+
+Muốn xem một mini app chạy một mình, không qua Home của host (và không phải bật server của mini app kia):
+
+```bash
+# Chạy ở thư mục gốc ElectroGo
+pnpm solo:sale     # Bán hàng
+pnpm solo:work     # Chấm công
+```
+
+1. Tắt server host (`pnpm start:dev`): lệnh solo dùng chính cổng 8081 của host nên hai cái không chạy cùng lúc được.
+2. Chạy một trong hai lệnh trên.
+   Xong khi: terminal hiện "Server listening at http://127.0.0.1:8081".
+3. Mở app ElectroGo trên máy ảo (hoặc bấm `r` trong terminal để tải lại).
+   Xong khi: app mở thẳng màn hình mini app, không có Home. Chưa cài app thì chạy `pnpm ios` một lần ở bước iOS bên trên.
+
+- Mỗi lần chỉ chạy được một mini app.
+- Khung chạy riêng là `dev/Harness.tsx` của mini app; nó thay host nên không có Home, không có mini app khác.
+- Chế độ này đặt `SOLO=1`, rspack.config.mjs của mini app bỏ Module Federation (xem bảng lỗi bên dưới nếu gặp RUNTIME-006).
+- Không dùng `PORT=8081 pnpm start:module` để thay: `start:module` gắn cứng cổng 9001/9002 trong package.json.
+- Chỉ chạy được khi mini app nằm trong `packages/` của host. Clone riêng mini app ra chạy thì chưa hỗ trợ (xem "Câu hỏi còn mở" của `electrogo-superapp`).
+
 ## Lỗi thường gặp
 
 ```
@@ -77,6 +99,18 @@ Mở Android Emulator từ Android Studio, kiểm tra `adb devices`, rồi `pnpm
 |                                                    | build lại                                           |
 +----------------------------------------------------+-----------------------------------------------------+
 | Clone mới thiếu code mini app                      | git submodule update --init --recursive             |
++----------------------------------------------------+-----------------------------------------------------+
+| error listen EADDRINUSE: address already in use    | Server host (pnpm start:dev) đang giữ cổng 8081.    |
+| ::1:8081 (khi chạy pnpm solo:sale)                 | Tắt nó (Ctrl+C, hoặc kill <PID> với PID lấy từ lsof |
+|                                                    | -nP -iTCP:8081 -sTCP:LISTEN) rồi chạy lại           |
++----------------------------------------------------+-----------------------------------------------------+
+| Màn đỏ [runtime not ready] ... RUNTIME-006         | Chạy riêng không có host khởi tạo Module            |
+| loadShareSync khi chạy riêng                       | Federation. Phải chạy bằng pnpm solo:<tên> (SOLO=1  |
+|                                                    | bỏ Module Federation). Vừa sửa rspack.config.mjs    |
+|                                                    | thì Ctrl+C chạy lại                                 |
++----------------------------------------------------+-----------------------------------------------------+
+| Command "solo" not found                           | Đứng sai thư mục (ví dụ ~). Chạy pnpm solo:sale ở   |
+|                                                    | thư mục gốc ElectroGo                               |
 +----------------------------------------------------+-----------------------------------------------------+
 ```
 

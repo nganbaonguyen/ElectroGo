@@ -126,7 +126,7 @@ Node >= 22.11, pnpm, Xcode + CocoaPods (iOS), Android Studio (Android), Git.
 5. **Tạo `rspack.config.mjs`** (host). Các phần bắt buộc:
    - `REMOTES`: bảng mini app, mỗi dòng `{port, env}`, ví dụ `work: {port: 9001, env: 'WORK_REMOTE_URL'}`.
    - Địa chỉ remote ở dev là `http://<host>:<port>/<platform>/mf-manifest.json`, với `<host>` = `localhost` (iOS) hoặc `10.0.2.2` (Android emulator). Production: lấy từ biến môi trường `WORK_REMOTE_URL`, `SALE_REMOTE_URL`.
-   - `shared` cho `react`, `react-native`, `react-native-safe-area-context`: `{singleton: true, eager: true, requiredVersion: ...}`.
+   - `shared`: tên thư viện đọc từ `federation.shared` trong package.json của host (react, react-native, react-native-safe-area-context), version lấy từ `dependencies`: `{singleton: true, eager: true, requiredVersion: ...}`. Xem mục "Thư viện dùng chung".
    - `resolve: Repack.getResolveOptions({enablePackageExports: true})`.
    - Plugin: `Repack.RepackPlugin()`, `DefinePlugin({__REMOTE_MANIFESTS__: ...})` (địa chỉ manifest để kiểm tra kết nối trước khi nạp), `ModuleFederationPluginV2({name: 'host', dts: false, remotes, shared})`.
 
@@ -158,7 +158,7 @@ Mini app là repo riêng. Cách nhanh nhất là làm theo skill `add-mini-app` 
    - `name`: tên remote, trùng khóa trong `REMOTES` của host (ví dụ `work`).
    - `filename`: `<tên>.container.js.bundle` (khác `index.bundle`, nếu trùng sẽ báo `Multiple assets emit different content to the same filename`).
    - `exposes: {'./App': './src/index.tsx'}`.
-   - `shared`: cùng 3 thư viện với host nhưng `{singleton: true, eager: false, import: false}` (luôn dùng bản của host).
+   - `shared`: cùng danh sách với host (đọc `federation.shared` của host, có bản sao trong package.json của mini app) nhưng `{singleton: true, eager: false, import: false}` (luôn dùng bản của host).
    - `resolve: Repack.getResolveOptions({enablePackageExports: true})`.
    - `entry: './dev/index.js'` (chỉ dùng khi chạy riêng).
 4. `src/index.tsx`: `export {default} from './app/<Tên>App'` và export `manifest`.
@@ -217,6 +217,7 @@ pnpm android
 - Server mini app chưa chạy thì bấm ô sẽ ra màn trắng "Không tải được ..." với hai nút Đóng / Thử lại.
 - Đổi `rspack.config.mjs` hoặc thêm thư viện native: khởi động lại server (và build lại app nếu là thư viện native).
 - Lỗi build hoặc máy ảo: xem skill `run-ios`.
+- Muốn chạy riêng một mini app (không qua Home): `pnpm solo:sale`, `pnpm solo:work`; xem skill `run-ios`.
 
 ### Phần E. Triển khai production (khi cần)
 
@@ -323,7 +324,7 @@ Ba component trong `src/shared/components/` của host: `MiniAppLoading` (đang 
 
 ## Quy tắc bắt buộc (vi phạm là lỗi)
 
-- `react`, `react-native`, `react-native-safe-area-context` là **singleton**: host `eager: true`, remote `import: false`.
+- `react`, `react-native`, `react-native-safe-area-context` (khai báo ở `federation.shared`, xem mục "Thư viện dùng chung") là **singleton**: host `eager: true`, remote `import: false`. Riêng khi chạy solo (`SOLO=1`) mini app bỏ hẳn Module Federation.
 - Mọi `rspack.config.mjs` (host và mini app) dùng `Repack.getResolveOptions({enablePackageExports: true})`; thiếu thì Module Federation báo `Module not found` ở các subpath như `@module-federation/runtime/helpers`.
 - Container của remote có `filename` riêng, khác `index.bundle`.
 - `__REMOTE_MANIFESTS__` do `DefinePlugin` chèn lúc build. Sửa `rspack.config.mjs` thì **phải khởi động lại** `pnpm start:dev`; không có biến này thì bước kiểm tra kết nối tự bỏ qua.
@@ -346,6 +347,39 @@ Ba component trong `src/shared/components/` của host: `MiniAppLoading` (đang 
 | typescript)                                        | package ở packages/ tìm được)                       |
 +----------------------------------------------------+-----------------------------------------------------+
 ```
+
+### Thư viện dùng chung (federation.shared)
+
+Danh sách thư viện dùng chung giữa host và mini app nằm ở một chỗ duy nhất: trường `federation.shared` trong package.json của host. Cả 3 file rspack.config.mjs (host, work, sale) đọc danh sách này khi build; version lấy từ `dependencies` của host.
+
+```json
+"federation": {"shared": ["react", "react-native", "react-native-safe-area-context"]}
+```
+
+- Mini app nằm trong host (`packages/`): đọc thẳng package.json của host.
+- Mini app không có host bên cạnh: dùng bản sao `federation.shared` trong package.json của chính nó. Khi host nâng version thì cập nhật bản sao này. Build trong host mà bản sao lệch sẽ in cảnh báo "[federation] bản sao ... lệch host".
+- Thư viện đã khai báo shared thì mini app không đóng gói bản riêng (`import: false`), nên host bắt buộc phải có.
+- Thư viện không nằm trong danh sách (ví dụ ionicons) thì phần JS được đóng gói vào bundle của mini app, phần native vẫn lấy từ host.
+
+```
++----------------------------------------------------+-----------------------------------------------------+
+| Thêm thư viện loại nào                             | Việc cần làm                                        |
++====================================================+=====================================================+
+| JS thuần, chỉ một mini app dùng (dayjs, zod...)    | Cài vào package.json của mini app đó. Thư viện nằm  |
+|                                                    | trong bundle của mini app, host không đổi, không    |
+|                                                    | cần phát hành lại host                              |
++----------------------------------------------------+-----------------------------------------------------+
+| Có phần native (camera, bluetooth, icon font...)   | Cài ở host (pod install, build lại app) và ghi      |
+|                                                    | peerDependencies ở mini app. Phải phát hành host    |
+|                                                    | mới trước, rồi mới đưa mini app dùng nó             |
++----------------------------------------------------+-----------------------------------------------------+
+| Cần một bản duy nhất dùng chung (có context hoặc   | Thêm tên vào federation.shared trong package.json   |
+| state toàn cục)                                    | của host (version lấy từ dependencies). Mini app    |
+|                                                    | cập nhật bản sao federation.shared cho khớp         |
++----------------------------------------------------+-----------------------------------------------------+
+```
+
+Nâng version mini app (ví dụ sale 0.1.0 lên 0.1.1) không cần làm gì ở host. Chỉ phải phát hành host khi bản mới cần thứ host chưa có: thư viện native, API react-native mới hơn bản host đang cài, hoặc mini app đổi tên `./App` hay tên màn hình mà host đang gõ cứng. Thứ tự phát hành: xem `release-deploy`.
 
 ## Trang chủ host: nhiều module, mở thẳng màn hình đích
 
@@ -459,6 +493,9 @@ Quy ước bắt buộc:
 3. Có cần ký bundle (code signing của Re.Pack) khi triển khai production không?
 4. Web phân phối chưa có đăng nhập: ai vào được cũng upload bundle và đặt LIVE được, mà bundle chạy thẳng trong app của người dùng. Cần xác thực trước khi dùng thật.
 
+5. Host chưa đọc version trong manifest để kiểm tra tương thích: không có minHostVersion, nên host cũ vẫn nạp bản LIVE mới và có thể lỗi nếu bản đó cần thư viện native mới. Hiện phải tự canh thứ tự (host trước, tích LIVE sau). manifest.ts của mini app (id, tên, icon, version) cũng chưa ai đọc; danh sách ô trên Home gõ cứng ở src/features/home/data/miniApps.ts.
+6. Chạy mini app độc lập hoàn toàn (clone riêng, không có host) chưa hỗ trợ: script build/start còn đòi host ở hai cấp trên, và package.json của mini app chưa có devDependencies (Re.Pack, rspack...).
+
 ## Ghi chú cho người sửa file này
 
 Đọc trước README.md, mục "Quy ước khi sửa tài liệu skill". Riêng file này:
@@ -466,5 +503,6 @@ Quy ước bắt buộc:
 - Tên phải khớp xuyên suốt: name trong rspack.config.mjs của mini app = khóa trong REMOTES của host = '<tên>/App' trong remotes.d.ts = khóa MiniAppKey.
 - Mọi số cổng (8081, 9001, 9002) và tên container phải đối chiếu rspack.config.mjs của host và của mini app.
 - Thêm bước setup thì đặt đúng phần A-E và có dòng "Xong khi".
+- Đổi danh sách thư viện dùng chung chỉ sửa federation.shared trong package.json của host (và bản sao ở work, sale); không gõ cứng danh sách trong rspack.config.mjs.
 - Cách phát hành (web phân phối, build apk/aab/ipa) chỉ ghi ở skill `release-deploy`; ở đây chỉ trỏ tới. Đổi `src/app/deploy.ts` hoặc `remotes.ts` thì sửa đoạn "Bản build phát hành" ở mục Luồng chạy.
 - Cây thư mục phải khớp thực tế (dùng ls). packages/shared chưa có thì không vẽ vào.
