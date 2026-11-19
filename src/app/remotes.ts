@@ -42,13 +42,35 @@ type MiniAppModule = {default: ComponentType<MiniAppProps>};
  * không cần build lại host.
  */
 async function loadFromDeploy(key: MiniAppKey): Promise<MiniAppModule> {
-  const entry = await resolveManifestUrl(key);
-  registerRemotes([{name: key, entry}], {force: true});
-  const mod = await loadRemote<MiniAppModule>(`${key}/App`);
-  if (!mod) {
-    throw new Error(`Không nạp được mini app "${key}" (${entry})`);
+  return withRetry(async () => {
+    const entry = await resolveManifestUrl(key);
+    registerRemotes([{name: key, entry}], {force: true});
+    const mod = await loadRemote<MiniAppModule>(`${key}/App`);
+    if (!mod) {
+      throw new Error(`Không nạp được mini app "${key}" (${entry})`);
+    }
+    return mod;
+  });
+}
+
+/**
+ * Thử lại khi lỗi (mạng chập chờn, hoặc GitHub Pages đang chuyển sang bản mới nên vài giây đầu trả 503/404).
+ * Màn loading vẫn hiện trong lúc chờ nên người dùng không thấy lỗi vặt. Mỗi lần thử hỏi lại địa chỉ bản LIVE từ đầu
+ * và đăng ký lại remote (force) để runtime Module Federation không giữ kết quả lỗi cũ. Hết các lần thử mới báo lỗi.
+ */
+const RETRY_DELAYS_MS = [1000, 2000, 4000, 6000];
+
+async function withRetry<T>(task: () => Promise<T>): Promise<T> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await task();
+    } catch (e) {
+      if (attempt >= RETRY_DELAYS_MS.length) {
+        throw e;
+      }
+      await new Promise<void>(resolve => setTimeout(resolve, RETRY_DELAYS_MS[attempt]));
+    }
   }
-  return mod;
 }
 
 /**

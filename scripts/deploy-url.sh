@@ -3,12 +3,29 @@
 # để NHÚNG vào app Release. Thiếu địa chỉ này app sẽ nạp mini app từ địa chỉ cố định của dev
 # (10.0.2.2:9001), điện thoại thật không bao giờ tải được.
 #
-# Thứ tự: biến DEPLOY_API_URL (build.local.env hoặc môi trường) > web đang chạy ở máy này (cổng 8080)
+# Thứ tự: DEPLOY_STATIC_URL (GitHub Pages, https cố định, mọi WiFi) > biến DEPLOY_API_URL (build.local.env hoặc môi trường) > web đang chạy ở máy này (cổng 8080)
 # > IP LAN của máy. Đặt DEPLOY_API_URL=none để cố ý build không dùng web (nạp từ địa chỉ cố định).
 
 DEPLOY_WEB_PORT="${DEPLOY_WEB_PORT:-8080}"
 
-if [ "${DEPLOY_API_URL:-}" = "none" ]; then
+if [ -n "${DEPLOY_STATIC_URL:-}" ] && [ "${DEPLOY_STATIC_URL}" != "none" ]; then
+  # GitHub Pages: https cố định trên internet, không phụ thuộc IP Mac hay WiFi. Ưu tiên cao nhất.
+  DEPLOY_STATIC_URL="${DEPLOY_STATIC_URL%/}"
+  case "$DEPLOY_STATIC_URL" in
+    https://*) ;;
+    *) echo "DEPLOY_STATIC_URL phải bắt đầu bằng https:// (GitHub Pages luôn là https)." >&2; exit 1 ;;
+  esac
+  export DEPLOY_STATIC_URL
+  export DEPLOY_API_URL=""
+  echo "==> Nhúng địa chỉ GitHub Pages vào app: $DEPLOY_STATIC_URL (chạy ở mọi WiFi)"
+  # Kiểm tra từ máy này (404 là chưa đẩy bundle lên Pages; không chặn build)
+  CODE="$(curl -s -m 8 -o /dev/null -w '%{http_code}' "$DEPLOY_STATIC_URL/" || true)"
+  if [ "$CODE" = "200" ]; then
+    echo "    Pages trả lời được từ máy này."
+  else
+    echo "    CẢNH BÁO: $DEPLOY_STATIC_URL trả về HTTP ${CODE:-000}. Đã bật Pages (Settings > Pages > nhánh gh-pages) và đưa bundle lên chưa?" >&2
+  fi
+elif [ "${DEPLOY_API_URL:-}" = "none" ]; then
   export DEPLOY_API_URL=""
   echo "==> DEPLOY_API_URL=none: app nạp mini app từ địa chỉ cố định (chỉ dùng được khi dev)"
 else

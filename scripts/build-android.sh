@@ -9,6 +9,7 @@
 # Biến môi trường (tùy chọn):
 #   ELECTROGO_VERSION_CODE   số nguyên, phải tăng mỗi lần đưa lên Google Play (mặc định 1)
 #   ELECTROGO_VERSION_NAME   chuỗi hiển thị, ví dụ 1.0.3 (mặc định 1.0)
+#   ELECTROGO_ABIS           kiến trúc CPU, mặc định armeabi-v7a,arm64-v8a (điện thoại thật)
 #   ELECTROGO_KEYSTORE, ELECTROGO_KEYSTORE_PASSWORD, ELECTROGO_KEY_ALIAS, ELECTROGO_KEY_PASSWORD
 #                            khóa ký release. Không có thì ký bằng debug.keystore (xem cảnh báo cuối).
 #
@@ -53,7 +54,10 @@ echo "==> Build release APK + AAB (versionName $VERSION_NAME, versionCode $VERSI
 # Chỉ build module app (:app:). Không ghi rõ thì Gradle chạy cả bước kiểm tra tài nguyên của từng thư viện và lỗi.
 # --rerun: Gradle không coi biến môi trường (DEPLOY_API_URL) là đầu vào của bước đóng gói JS, nên có thể dùng lại
 # bundle cũ và app vẫn mang địa chỉ cũ. Ép chạy lại bước này mỗi lần.
-(cd android && ./gradlew :app:createBundleReleaseJsAndAssets --rerun :app:assembleRelease :app:bundleRelease)
+# Chỉ build ABI của điện thoại thật (arm). x86/x86_64 chỉ cần cho giả lập: thêm bằng
+# ELECTROGO_ABIS=armeabi-v7a,arm64-v8a,x86_64 nếu muốn APK chạy được trên emulator Intel.
+ABIS="${ELECTROGO_ABIS:-armeabi-v7a,arm64-v8a}"
+(cd android && ./gradlew -PreactNativeArchitectures="$ABIS" :app:createBundleReleaseJsAndAssets --rerun :app:assembleRelease :app:bundleRelease)
 
 OUT="$ROOT/build/release"
 BASE="ElectroGo-${VERSION_NAME}-${VERSION_CODE}"

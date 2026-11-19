@@ -168,8 +168,13 @@ Cấu hình đặt một lần trong `scripts/build.local.env` (sao từ `script
 +----------------------------------+------------------+----------------------------------------------------+
 | Biến                             | Nơi đặt          | Ý nghĩa                                            |
 +==================================+==================+====================================================+
-| DEPLOY_API_URL                   | build.local.env  | Địa chỉ web nhúng vào app. Bỏ trống: script tự     |
-|                                  |                  | tìm. none: cố ý không dùng web                     |
+| DEPLOY_STATIC_URL                | build.local.env  | Địa chỉ GitHub Pages (https) nhúng vào app. Chạy   |
+|                                  |                  | ở mọi WiFi, không cần Mac bật. Có biến này thì     |
+|                                  |                  | DEPLOY_API_URL bị bỏ qua                           |
++----------------------------------+------------------+----------------------------------------------------+
+| DEPLOY_API_URL                   | build.local.env  | Địa chỉ web trong mạng LAN (chỉ khi không dùng     |
+|                                  |                  | Pages). Bỏ trống: script tự tìm. none: cố ý không  |
+|                                  |                  | dùng web                                           |
 +----------------------------------+------------------+----------------------------------------------------+
 | DEPLOY_APP_ID, DEPLOY_ENV        | build.local.env  | Ứng dụng trên web (mặc định electrogo) và môi      |
 |                                  |                  | trường (mặc định live)                             |
@@ -203,6 +208,34 @@ Chữ ký:
 - Android: AAB đưa lên Google Play phải ký bằng khóa upload của bạn (ELECTROGO_KEYSTORE...). APK ký bằng khóa debug vẫn cài và upload web được.
 - iOS: máy hiện chỉ có chứng chỉ Apple Development nên `.ipa` mặc định chỉ cài được lên máy đã đăng ký UDID. Đưa lên App Store Connect cần chứng chỉ Distribution, Bundle ID thật và ELECTROGO_IOS_EXPORT_METHOD=app-store-connect.
 
+## GitHub Pages: chạy ở mọi WiFi
+
+Web phân phối chạy trên Mac nên địa chỉ LAN đổi theo mạng. Dùng GitHub Pages để app có một địa chỉ https cố định, đổi WiFi hay tắt Mac vẫn nạp được mini app.
+
+```
++----------------------------------+----------------------------------------------------------------------+
+| Bước (làm một lần)               | Cách làm                                                             |
++==================================+======================================================================+
+| 1. Tạo repo public               | Ví dụ nganbaonguyen/electrogo-bundles (Pages chỉ chạy repo private   |
+|                                  | với gói trả phí, nên bundle sẽ đọc được công khai)                   |
++----------------------------------+----------------------------------------------------------------------+
+| 2. Khai báo trong web            | Tab Bundle mini app, khung GitHub Pages: dán địa chỉ repo .git, bấm  |
+|                                  | Lưu rồi Đưa lên ngay (lần đầu tạo nhánh gh-pages)                    |
++----------------------------------+----------------------------------------------------------------------+
+| 3. Bật Pages                     | Repo > Settings > Pages > Source: Deploy from a branch, nhánh        |
+|                                  | gh-pages, thư mục / (root)                                           |
++----------------------------------+----------------------------------------------------------------------+
+| 4. Build host                    | Đặt DEPLOY_STATIC_URL=https://<tên>.github.io/<repo> trong           |
+|                                  | build.local.env, chạy pnpm build:android, cài lại app                |
++----------------------------------+----------------------------------------------------------------------+
+```
+
+Sau đó mỗi lần upload bundle, tick LIVE hoặc xóa phiên bản trên web, server tự đẩy lại lên Pages (server/pages.js): sinh file resolve/<module>/<nền tảng>/<môi trường>.json và chép các bundle đang được phục vụ, rồi `git push --force` nhánh gh-pages (luôn một commit). App đọc file tĩnh này thay vì gọi API. Cập nhật mini app không cần build lại host.
+
+- Độ trễ: GitHub cần khoảng 1 đến 2 phút để dựng Pages. App thêm `?t=` vào URL để không dính cache CDN.
+- Đăng nhập git dùng sẵn của máy (keychain hoặc ssh), web không lưu token. Có thể đặt PAGES_REPO và PAGES_URL trong môi trường để ghi đè.
+- Kho APK/IPA vẫn chỉ ở web LAN, không lên Pages.
+
 ## Lỗi thường gặp
 
 ```
@@ -226,10 +259,19 @@ Chữ ký:
 | http://<IP>:8080                 | bị (WiFi công ty hay bị)           | mạng khác (hotspot), rồi build   |
 |                                  |                                    | lại host vì IP nằm trong app     |
 +----------------------------------+------------------------------------+----------------------------------+
-| Web báo "Tar không phải bundle:  | Upload nhầm tar mã nguồn do pnpm   | Chạy pnpm build (không phải      |
-| thiếu ios/ hoặc android/"        | build:src                          | build:src); hai lệnh cùng ghi ra |
-|                                  |                                    | một tên file, lệnh sau ghi đè    |
-|                                  |                                    | lệnh trước                       |
+| thiếu ios/ hoặc android/"        | đuôi -src.tar do pnpm build:src)   | do pnpm build tạo (nặng khoảng   |
+|                                  |                                    | 1,9 MB)                          |
++----------------------------------+------------------------------------+----------------------------------+
+| Web báo "Tar này là của mini app | Chọn nhầm module khi upload        | Chọn đúng module, hoặc đúng file |
+| X, không phải Y"                 | (manifest ghi tên mini app khác)   | tar của module đó                |
++----------------------------------+------------------------------------+----------------------------------+
+| App báo "[ScriptManager] Failed  | Bản LIVE của module thực chất là   | Tắt hoặc xóa bản sai ở nút       |
+| to prefetch script"              | bundle của mini app khác (upload   | versions, upload lại đúng tar,   |
+|                                  | nhầm từ trước khi web có kiểm tra) | tích LIVE                        |
++----------------------------------+------------------------------------+----------------------------------+
+| Lỗi tải mini app vài chục giây   | GitHub Pages đang chuyển bản       | App tự thử lại; nếu vẫn lỗi chờ  |
+| sau khi vừa upload               |                                    | khoảng 2 phút rồi mở lại mini    |
+|                                  |                                    | app                              |
 +----------------------------------+------------------------------------+----------------------------------+
 | Xcode Archive lỗi "Unable to     | Xcode đóng gói JS bằng Metro       | Giữ dòng export CLI_PATH trong   |
 | resolve module work/App"         | (scripts/bundle.js) thay vì        | ios/.xcode.env                   |

@@ -39,7 +39,14 @@ export default function RootNavigator() {
 
   // Mini app chiếm toàn màn hình, không hiện thanh tab.
   if (miniApp !== null) {
-    return <MiniAppHost item={miniApp} onClose={() => setMiniApp(null)} topInset={insets.top} />;
+    return (
+      <MiniAppHost
+        item={miniApp}
+        onClose={() => setMiniApp(null)}
+        topInset={insets.top}
+        bottomInset={insets.bottom}
+      />
+    );
   }
 
   // Hồ sơ cá nhân chiếm toàn màn hình, mở khi bấm ảnh đại diện ở Home.
@@ -86,7 +93,7 @@ const styles = StyleSheet.create({
 /** Thời gian tối thiểu hiện màn loading khi tải/thử lại mini app. */
 const MIN_LOADING_MS = 900;
 
-type MiniAppHostProps = {item: MiniAppItem; onClose: () => void; topInset: number};
+type MiniAppHostProps = {item: MiniAppItem; onClose: () => void; topInset: number; bottomInset: number};
 
 type LoadState =
   | {status: 'loading'}
@@ -98,7 +105,7 @@ type LoadState =
  * loading (logo) -> ready (hiện mini app) hoặc error (màn trắng có nút Thử lại / Đóng).
  * Không dùng lazy/Suspense để lỗi tải không bị ném trong lúc render (tránh màn đỏ ở chế độ dev).
  */
-function MiniAppHost({item, onClose, topInset}: MiniAppHostProps) {
+function MiniAppHost({item, onClose, topInset, bottomInset}: MiniAppHostProps) {
   const [attempt, setAttempt] = useState(0);
   const [state, setState] = useState<LoadState>({status: 'loading'});
   const name = item.label; // hiển thị tên module đang mở, ví dụ "Phiếu lương"
@@ -128,8 +135,9 @@ function MiniAppHost({item, onClose, topInset}: MiniAppHostProps) {
     };
   }, [item.app, attempt]);
 
+  // paddingBottom: chừa chỗ cho thanh điều hướng Android ở đáy, không có thì phần sát đáy của mini app bị nó che mất
   return (
-    <View style={[styles.miniApp, {paddingTop: topInset}]}>
+    <View style={[styles.miniApp, {paddingTop: topInset, paddingBottom: bottomInset}]}>
       <StatusBar barStyle="dark-content" />
       <Pressable style={styles.back} onPress={onClose}>
         <Text style={styles.backText}>‹ Trang chủ</Text>

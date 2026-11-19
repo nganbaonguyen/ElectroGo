@@ -44,10 +44,13 @@ export default Repack.defineRspackConfig(env => {
     Object.entries(remotes).map(([name, entry]) => [name, entry.slice(entry.indexOf('@') + 1)]),
   );
 
-  // Web phân phối bundle (web-deployment-apk). Có DEPLOY_API_URL thì app hỏi web bản LIVE của mini app;
-  // bỏ trống thì nạp từ địa chỉ cố định ở REMOTES (dev). Ví dụ: DEPLOY_API_URL=https://deploy.example.com
+  // Phân phối bundle (web-deployment-apk). Thứ tự ưu tiên:
+  //   DEPLOY_STATIC_URL: GitHub Pages (https cố định, web tự đưa bundle lên), chạy ở mọi WiFi. Khuyên dùng cho Release.
+  //   DEPLOY_API_URL:    web chạy trong mạng LAN, phụ thuộc IP máy Mac.
+  //   bỏ trống:          nạp từ địa chỉ cố định ở REMOTES (dev).
   const deployConfig = {
     apiUrl: (process.env.DEPLOY_API_URL ?? '').replace(/\/+$/, ''),
+    staticUrl: (process.env.DEPLOY_STATIC_URL ?? '').replace(/\/+$/, ''),
     appId: process.env.DEPLOY_APP_ID ?? 'electrogo',
     env: ['live', 'prod', 'staging'].includes(process.env.DEPLOY_ENV) ? process.env.DEPLOY_ENV : 'live',
   };

@@ -1092,8 +1092,9 @@ build host. registerRemotes với force: true thay địa chỉ đó ngay lúc c
 được nạp mà không build lại host. Lỗi (web không trả lời, chưa có bản LIVE, bản bị tắt Active) được ném ra
 thành Promise bị từ chối, MiniAppHost hiện màn báo lỗi có nút Thử lại, giống các lỗi tải ở mục 4.
 
-Chỉ bản build có DEPLOY_API_URL mới đi đường này. Chạy dev (pnpm start:dev) không có biến đó nên vẫn nạp từ
-địa chỉ cố định 9001, 9002.
+Chỉ bản build có DEPLOY_STATIC_URL (GitHub Pages, xem 13A.8) hoặc DEPLOY_API_URL (web trong mạng LAN) mới đi
+đường này; STATIC được ưu tiên. Chạy dev (pnpm start:dev) không có biến nào nên vẫn nạp từ địa chỉ cố định
+9001, 9002.
 
 Hình dung dễ nhớ: tích LIVE trên web giống bỏ một lá thư vào hòm thư. Cách đang dùng là app tự ra mở hòm thư
 xem có thư mới mỗi khi cần (app kéo, pull), chứ không phải bưu tá đến bấm chuông báo mỗi khi có thư (web đẩy,
@@ -1158,6 +1159,9 @@ không ai quên đặt biến, scripts/deploy-url.sh tự tìm địa chỉ (h�
 LAN), in ra địa chỉ đã nhúng và dừng nếu không xác định được. Bản build không có địa chỉ này nạp từ địa chỉ
 dev và thất bại trên máy thật (xem các lỗi thật ở mục 8).
 
+Địa chỉ LAN hay đổi theo WiFi nên bản phát hành dùng DEPLOY_STATIC_URL trỏ tới GitHub Pages (https, cố định), xem
+13A.8. Khi có biến này, script bỏ qua bước dò IP LAN và chỉ chấp nhận địa chỉ https.
+
 Hai file ra từ pnpm build:android: .apk (cài trực tiếp, upload web) và .aab (Google Play, cần khóa upload
 riêng). pnpm build:ios ra .ipa ký bằng team trong scripts/build.local.env; với chứng chỉ Development hiện có
 thì chỉ cài được lên máy đã đăng ký UDID.
@@ -1174,8 +1178,7 @@ script mới (theo xác nhận của bạn). Các hạn chế còn lại:
 +============================+============================================+================================+
 | Bảo mật web                | Chưa đăng nhập, chạy http trong LAN        | Đăng nhập, https, ký bundle    |
 +----------------------------+--------------------------------------------+--------------------------------+
-| Địa chỉ web đổi theo mạng  | Nằm trong app, đổi mạng phải build lại     | Máy chủ có địa chỉ cố định     |
-|                            | host                                       |                                |
+|                            | LAN vẫn dùng được khi dev                  |                                |
 +----------------------------+--------------------------------------------+--------------------------------+
 | Đổi LIVE khi app đang mở   | Chưa kiểm chứng việc mở lại mini app trong | Kiểm thử và xóa bộ nhớ đệm của |
 |                            | cùng lần chạy; nếu còn thấy bản cũ thì tắt | remote                         |
@@ -1191,6 +1194,159 @@ script mới (theo xác nhận của bạn). Các hạn chế còn lại:
 |                            |                                            | khi phát hành                  |
 +----------------------------+--------------------------------------------+--------------------------------+
 ```
+
+### 13A.8 Đưa bundle lên GitHub Pages để chạy ở mọi WiFi
+
+Đây là bài toán thật gặp khi chạy trên điện thoại. Mở Chấm công báo: Không lấy được bản mini app "work" từ
+http://10.152.168.146:8080 (Network request failed). Mini app không hỏng và web vẫn chạy.
+
+Nguyên nhân (đã chứng minh bằng curl): địa chỉ web được nhúng vào app lúc build (13A.6) là IP LAN của máy
+Mac. Mac đổi WiFi thì IP đổi sang 10.152.172.51. Gọi IP mới trả HTTP 200, gọi IP cũ không trả lời. Tức là app
+vẫn gọi địa chỉ cũ.
+
+Muốn đổi WiFi vẫn chạy thì địa chỉ phải cố định, nằm trên internet, dùng https và không cần Mac bật. Các cách
+đã cân nhắc:
+
+```
++--------------------+--------------------------------+------------------------------------------------+
+| Cách               | Ưu điểm                        | Vì sao chọn hoặc không chọn                    |
++====================+================================+================================================+
+| Tunnel Cloudflare  | https, không cần mở cổng       | URL đổi mỗi lần chạy; tunnel cũ đã chết khi    |
+| miễn phí           |                                | kiểm tra (curl không trả lời); Mac vẫn phải    |
+|                    |                                | bật. Không chọn.                               |
++--------------------+--------------------------------+------------------------------------------------+
+| VPS Oracle Always  | Chạy 24/7, giữ nguyên API của  | Phải đăng ký bằng thẻ để xác minh. Repo web đã |
+| Free               | web                            | có sẵn Docker, Caddy, nhưng chưa dùng.         |
++--------------------+--------------------------------+------------------------------------------------+
+| Render gói miễn    | Không cần thẻ                  | Đĩa tạm nên mất bundle khi restart; ngủ sau 15 |
+| phí                |                                | phút không có truy cập, đánh thức mất tới      |
+|                    |                                | khoảng 1 phút. Không chọn.                     |
++--------------------+--------------------------------+------------------------------------------------+
+| GitHub Pages       | Miễn phí, không cần thẻ,       | Chỉ phục vụ file tĩnh nên phải đổi API resolve |
+|                    | https, địa chỉ cố định, không  | thành file tĩnh, và repo phải public. Đã chọn. |
+|                    | cần máy bật                    |                                                |
++--------------------+--------------------------------+------------------------------------------------+
+```
+
+Cách làm sau khi chọn GitHub Pages:
+
+```
+  Mac: web phân phối (upload tar, tích LIVE)
+        |  tự động sau mỗi thay đổi (gom 2 giây)
+        v
+  sinh thư mục tĩnh -> git push --force -> nhánh gh-pages của repo electrogo-bundles
+        |
+        v
+  https://<tên>.github.io/electrogo-bundles/electrogo/
+        resolve/work/android/live.json        <- app hỏi "bản nào đang LIVE"
+        bundles/work/0.1.0-b4/android/...     <- app tải manifest và chunk
+        ^
+        |  chạy ở mọi WiFi, không cần Mac bật
+  App host (nhúng DEPLOY_STATIC_URL lúc build)
+```
+
+Các kỹ thuật phải xử lý, mỗi dòng là một lỗi hoặc rủi ro thật đã gặp hoặc đã phòng:
+
+```
++----------------------------------+----------------------------------------+------------------------------+
+| Vấn đề kỹ thuật                  | Cách xử lý                             | Nằm ở                        |
++==================================+========================================+==============================+
+| Pages chỉ có file tĩnh, không    | Web sinh sẵn file                      | server/pages.js;             |
+| chạy được API resolve?platform=  | resolve/<module>/<nền tảng>/<môi       | src/app/deploy.ts            |
+|                                  | trường>.json; app đọc file thay vì gọi |                              |
+|                                  | API                                    |                              |
++----------------------------------+----------------------------------------+------------------------------+
+| CDN cache file tĩnh (mặc định    | App thêm ?t=<thời điểm> vào URL, mỗi   | src/app/deploy.ts, hàm       |
+| của Pages thường khoảng 10 phút, | lần hỏi là một URL mới nên không dính  | resolveUrl                   |
+| chưa đo), bản mới có thể bị che  | cache                                  |                              |
++----------------------------------+----------------------------------------+------------------------------+
+| Repo phình theo từng lần đẩy     | Mỗi lần git init lại rồi push --force  | server/pages.js, hàm         |
+|                                  | lên nhánh gh-pages, nhánh luôn chỉ có  | publishNow                   |
+|                                  | một commit                             |                              |
++----------------------------------+----------------------------------------+------------------------------+
+| Nhiều thay đổi liên tiếp (upload | Gom 2 giây (debounce), chạy tuần tự;   | server/pages.js, schedule và |
+| rồi tích LIVE) làm đẩy trùng     | có yêu cầu mới lúc đang đẩy thì chạy   | run                          |
+|                                  | lại một lần sau khi xong               |                              |
++----------------------------------+----------------------------------------+------------------------------+
+| Lúc Pages chuyển bản có vài giây | Giữ mọi bản Active trên Pages; app tự  | pages.js, generate;          |
+| trả 503 rồi 404, và bản cũ bị    | thử lại tối đa 5 lần (cách 1, 2, 4, 6  | remotes.ts, withRetry        |
+| xóa ngay                         | giây) rồi mới báo lỗi                  |                              |
++----------------------------------+----------------------------------------+------------------------------+
+| Chunk phải nằm cạnh manifest     | Giữ cấu trúc ios/ android/, mỗi phiên  | server/pages.js, generate    |
+|                                  | bản một thư mục; Re.Pack đổi           |                              |
+|                                  | publicPath lúc chạy (13A.4)            |                              |
++----------------------------------+----------------------------------------+------------------------------+
+| Upload nhầm tar của mini app này | Web đọc name trong mf-manifest.json,   | server/bundles.js, route     |
+| vào module kia: app báo Failed   | khác khóa module thì từ chối kèm thông | upload                       |
+| to prefetch script               | báo rõ                                 |                              |
++----------------------------------+----------------------------------------+------------------------------+
+| pnpm build:src ghi đè tar bundle | build:src ra file đuôi -src.tar và     | scripts/build-tar.sh của     |
+| vì cùng tên file                 | không xóa thư mục build/               | mini app                     |
++----------------------------------+----------------------------------------+------------------------------+
+| Biết app đã nạp đúng bản vừa     | Mỗi pnpm build tăng số trong .build-   | build-bundle.sh,             |
+| upload chưa                      | info.json (đưa lên git, lấy số lớn hơn | rspack.config.mjs,           |
+|                                  | giữa máy và GitHub rồi cộng 1); nhúng  | BuildStamp.tsx               |
+|                                  | bằng DefinePlugin __BUILD_INFO__; hiện |                              |
+|                                  | nhãn Phiên bản bundle 0.1.0 (N)        |                              |
++----------------------------------+----------------------------------------+------------------------------+
+| Android vẽ app xuyên xuống dưới  | Host chừa paddingBottom bằng           | src/app/RootNavigator.tsx,   |
+| thanh điều hướng nên phần sát    | insets.bottom (safe area) cho khung    | MiniAppHost                  |
+| đáy bị che                       | chứa mini app                          |                              |
++----------------------------------+----------------------------------------+------------------------------+
+| Build Release lỗi cache C++ ở    | Script mặc định chỉ build ABI arm;     | scripts/build-android.sh     |
+| ABI x86                          | thêm x86 bằng biến ELECTROGO_ABIS      |                              |
++----------------------------------+----------------------------------------+------------------------------+
+```
+
+Cách kiểm chứng (số đo thật, mỗi cái chỉ đo một lần, không phải thống kê):
+
+- Xác định nguyên nhân: curl vào IP cũ (không trả lời) và IP mới (200).
+- Đo độ trễ của Pages: đẩy một file đổi nội dung và một file mới, theo dõi bằng curl. Hai file lên cùng lúc
+  sau 23 giây; ngay lúc đầu có lúc trả 503 rồi 404. Từ đó mới thêm cơ chế giữ bản cũ và tự thử lại.
+- Kiểm tra APK sau khi build: mở file ra tìm địa chỉ Pages (có) và IP cũ (không còn). Chuỗi tiếng Việt trong
+  bundle Hermes nằm dạng UTF-16 nên grep theo UTF-8 không thấy, phải tìm theo UTF-16.
+
+Hạn chế còn lại, nói thật khi bị hỏi:
+
+```
++--------------------------------+------------------------------------------+----------------------------+
+| Hạn chế                        | Hiện trạng                               | Hướng xử lý                |
++================================+==========================================+============================+
+| Repo Pages phải public         | Ai cũng đọc được mã JS của mini app      | Không để secret trong      |
+|                                |                                          | bundle; hoặc máy chủ riêng |
++--------------------------------+------------------------------------------+----------------------------+
+| Độ trễ khi phát hành           | Vài chục giây đến khoảng 2 phút sau khi  | Chấp nhận được cho cập     |
+|                                | upload                                   | nhật không gấp             |
++--------------------------------+------------------------------------------+----------------------------+
+| Cần mạng                       | App chưa lưu bản mini app để chạy        | Lưu bundle cuối cùng trên  |
+|                                | offline                                  | máy                        |
++--------------------------------+------------------------------------------+----------------------------+
+| Chưa ký bundle                 | Ai ghi được vào repo là thay được mã     | Ký bundle, app kiểm chữ ký |
+|                                | chạy trong app                           |                            |
++--------------------------------+------------------------------------------+----------------------------+
+| Build và upload làm tay        | Chưa có CI/CD cho mini app               | GitHub Actions: build tar  |
+|                                |                                          | rồi đẩy lên Pages          |
++--------------------------------+------------------------------------------+----------------------------+
+| Mới thử trên Android           | Chưa thử luồng Pages trên iOS thật       | Thử trên iOS trước khi     |
+|                                |                                          | phát hành                  |
++--------------------------------+------------------------------------------+----------------------------+
+```
+
+Câu hỏi phỏng vấn gợi ý:
+
+Hỏi: Đổi WiFi mà app không nạp được mini app, bạn tìm nguyên nhân thế nào?
+Đáp: Đọc thông báo lỗi thì thấy app gọi một IP LAN cụ thể. Tôi curl IP đó (không trả lời) và IP hiện tại của
+máy chạy web (200), nên web không hỏng. Nguyên nhân là địa chỉ web bị nhúng cứng vào app lúc build, mà IP máy
+dev đổi theo mạng.
+
+Hỏi: Vì sao dùng GitHub Pages thay vì dựng máy chủ?
+Đáp: Cần địa chỉ cố định, https, không phụ thuộc máy tôi bật, và miễn phí không cần thẻ. VPS miễn phí cần
+thẻ, gói free của Render mất file khi restart và ngủ sau 15 phút. Pages chỉ phục vụ file tĩnh nên tôi đổi API
+hỏi bản LIVE thành các file JSON sinh sẵn. Đổi lại phải chấp nhận repo public và độ trễ phát hành.
+
+Hỏi: Làm sao biết app đã nạp đúng bản vừa upload?
+Đáp: Mỗi lần build mini app tăng một số build, nhúng vào bundle và hiện ở chân màn hình vài giây. Số này đi
+theo git nên nhiều máy dùng chung một bộ đếm. Upload xong mở lại mini app thấy số mới là biết đã nạp đúng.
 
 # PHẦN II. KIẾN THỨC REACT NATIVE CHUNG (mục 14 đến 27)
 
@@ -2413,6 +2569,19 @@ Quan trọng: chỉ nói con số thật. Ví dụ mẫu trong ghi chú gốc (5
   Result: mini app mở động từ server riêng, lỗi tải hoặc crash không làm sập app chủ, có quy
   trình thêm mini app mới. Hiện dữ liệu còn mock, chưa chạy production.
 
+### 26.2A Câu trả lời mẫu thứ hai: app không nạp được mini app khi đổi WiFi (đúng sự thật)
+
+  Situation: trên điện thoại thật, mở mini app báo "Network request failed" từ một IP LAN; đổi mạng là lỗi,
+  trong khi web phân phối vẫn chạy.
+  Task: làm cho app nạp được mini app ở mọi mạng, không phụ thuộc máy dev, và cập nhật mini app vẫn không
+  phải build lại host.
+  Action: chứng minh nguyên nhân bằng curl (IP nhúng trong app đã cũ, IP mới trả 200). So sánh tunnel, VPS,
+  hosting miễn phí và chọn GitHub Pages. Đổi API hỏi bản LIVE thành file JSON tĩnh do web tự sinh và đẩy lên
+  Pages sau mỗi lần upload. Đo độ trễ thật của Pages rồi thêm giữ bản cũ và tự thử lại. Chặn upload nhầm
+  module bằng cách so tên trong manifest. Thêm số build hiện trên màn hình để kiểm chứng bản nạp.
+  Result: app nạp mini app qua địa chỉ https cố định, đổi mạng không ảnh hưởng, cập nhật mini app chỉ cần
+  upload tar. Hạn chế: repo public, chưa có CI/CD, mới thử trên Android.
+
 ### 26.3 Các câu hỏi hành vi hay gặp và hướng trả lời
 
 ```
@@ -2534,9 +2703,9 @@ Quan trọng: chỉ nói con số thật. Ví dụ mẫu trong ghi chú gốc (5
   số thật của dự án.
 - Chỗ nào phụ thuộc phiên bản hoặc ngày tháng (Flipper, CodePush, Dynamic Links, OWASP, New
   Architecture) thì nên kiểm tra lại khi đọc sau một thời gian.
-- Mục 13A giải thích hệ phát hành (web phân phối, LIVE, build host). Đổi src/app/deploy.ts, remotes.ts,
-  scripts/build-*.sh, scripts/deploy-url.sh hoặc API của web thì sửa mục 13A, bảng lỗi ở mục 8 và skill
-  release-deploy. Các bước làm chỉ ghi ở release-deploy, ở đây chỉ giải thích vì sao.
+- Mục 13A giải thích hệ phát hành (web phân phối, LIVE, build host, GitHub Pages ở 13A.8). Đổi src/app/deploy.ts,
+  remotes.ts, scripts/build-*.sh, scripts/deploy-url.sh, server/pages.js hoặc API của web thì sửa mục 13A, bảng
+  lỗi ở mục 8 và skill release-deploy. Các bước làm chỉ ghi ở release-deploy, ở đây chỉ giải thích vì sao.
 - Thông tin setup từng bước và quy tắc nằm ở SKILL.md. Ở đây chỉ giải thích vì sao và cách
   hoạt động.
 - Bảng dùng dạng kẻ khung theo README, sơ đồ nằm trong code block thụt lề 2 khoảng trắng.
