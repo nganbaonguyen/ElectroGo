@@ -7,7 +7,21 @@
       "root": "/Users/ngannguyenbao/ElectroGo/node_modules/@react-native-firebase/app",
       "name": "@react-native-firebase/app",
       "platforms": {
-        "ios": null,
+        "ios": {
+          "podspecPath": "/Users/ngannguyenbao/ElectroGo/node_modules/@react-native-firebase/app/RNFBApp.podspec",
+          "version": "26.4.2",
+          "configurations": [],
+          "scriptPhases": [
+            {
+              "name": "[RNFB] Core Configuration",
+              "path": "./ios_config.sh",
+              "execution_position": "after_compile",
+              "input_files": [
+                "$(BUILT_PRODUCTS_DIR)/$(INFOPLIST_PATH)"
+              ]
+            }
+          ]
+        },
         "android": {
           "sourceDir": "/Users/ngannguyenbao/ElectroGo/node_modules/@react-native-firebase/app/android",
           "packageImportPath": "import io.invertase.firebase.app.ReactNativeFirebaseAppPackage;",
@@ -27,7 +41,22 @@
       "root": "/Users/ngannguyenbao/ElectroGo/node_modules/@react-native-firebase/crashlytics",
       "name": "@react-native-firebase/crashlytics",
       "platforms": {
-        "ios": null,
+        "ios": {
+          "podspecPath": "/Users/ngannguyenbao/ElectroGo/node_modules/@react-native-firebase/crashlytics/RNFBCrashlytics.podspec",
+          "version": "26.4.2",
+          "configurations": [],
+          "scriptPhases": [
+            {
+              "name": "[RNFB] Crashlytics Configuration",
+              "path": "./ios_config.sh",
+              "execution_position": "after_compile",
+              "input_files": [
+                "${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Resources/DWARF/${TARGET_NAME}",
+                "$(BUILT_PRODUCTS_DIR)/$(INFOPLIST_PATH)"
+              ]
+            }
+          ]
+        },
         "android": {
           "sourceDir": "/Users/ngannguyenbao/ElectroGo/node_modules/@react-native-firebase/crashlytics/android",
           "packageImportPath": "import io.invertase.firebase.crashlytics.ReactNativeFirebaseCrashlyticsPackage;",

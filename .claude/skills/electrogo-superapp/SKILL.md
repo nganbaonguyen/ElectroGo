@@ -246,22 +246,22 @@ Crashlytics là thư viện native nên chỉ cài ở host; mini app không ph�
 
 Đã có trong repo:
 
-- Thư viện: `@react-native-firebase/app` và `@react-native-firebase/crashlytics` (cùng version 27.1.1) ở dependencies của host.
+- Thư viện: `@react-native-firebase/app` và `@react-native-firebase/crashlytics` (cùng version 26.4.2, KHÔNG nâng lên 27, xem lý do bên dưới) ở dependencies của host.
 - `src/shared/monitoring/crashlytics.ts`: `initMonitoring()` (gọi ở App.tsx, chế độ dev không gửi báo cáo) và `reportMiniAppError()` (gọi ở MiniAppErrorBoundary và khi tải mini app lỗi, kèm thuộc tính `miniApp`).
 - Android: plugin `google-services` và `firebase-crashlytics` khai báo ở android/build.gradle; android/app/build.gradle chỉ áp dụng khi có file android/app/google-services.json.
-- iOS: CHƯA có. react-native.config.js đang đặt `ios: null` cho hai thư viện Firebase nên iOS không nạp chúng và build như cũ; `crashlytics.ts` dùng `require` trong try nên iOS không sập.
+- iOS: AppDelegate.swift gọi `FirebaseApp.configure()` chỉ khi có file GoogleService-Info.plist. Podfile đặt `$RNFirebaseDisableSPM = true` (Firebase lấy qua CocoaPods) và `use_modular_headers!`; post_install nâng iOS tối thiểu của các pod phụ lên 15.0. Project Xcode đã khai báo sẵn GoogleService-Info.plist trong Copy Bundle Resources, nên thiếu file này thì iOS build lỗi "Build input file cannot be found". Bước tải dSYM lên Firebase do `pod install` tự thêm vào target (tên "[RNFB] Crashlytics Configuration"), không phải thêm tay.
 
-Lý do iOS chưa có: React Native Firebase 27 bắt buộc `use_frameworks! :linkage => :dynamic`. Thử với React Native 0.88.1 đều lỗi liên kết (đã thử ngày 2026-11-20): giữ lõi dựng sẵn thì ReactCodegen báo thiếu symbol `facebook::react::Sealable`; tắt lõi dựng sẵn (`RCT_USE_PREBUILT_RNCORE=0`) thì báo thiếu header `react/debug/react_native_assert.h`. Hướng chưa thử: dùng bản React Native Firebase cũ hơn (còn dùng CocoaPods, không bắt buộc dynamic), hoặc đợi bản React Native/Firebase sửa.
+Vì sao dùng bản 26.4.2 mà không dùng 27: bản 27 chỉ hỗ trợ Swift Package Manager và bắt buộc `use_frameworks! :linkage => :dynamic`, mà React Native 0.88.1 không build được kiểu này (đã thử ngày 2026-11-20): giữ lõi dựng sẵn thì ReactCodegen báo thiếu symbol `facebook::react::Sealable`; tắt lõi dựng sẵn (`RCT_USE_PREBUILT_RNCORE=0`) thì thiếu header `react/debug/react_native_assert.h`. Bản 26.4.2 còn chế độ CocoaPods nên build được (đã build iOS simulator arm64 thành công với file plist thử). Lưu ý: Firebase đã báo CocoaPods sẽ không có bản mới sau tháng 10/2026; các bản đang dùng vẫn cài được. Khi React Native sửa được lỗi dynamic frameworks thì mới nâng lên 27.
 
-Chưa có file google-services.json thì Android vẫn build và chạy, chỉ không gửi báo cáo.
+Chưa có file cấu hình thì Android vẫn build và chạy, chỉ không gửi báo cáo. iOS thì khác: thiếu GoogleService-Info.plist là build lỗi.
 
 Người dùng tự làm trên Firebase:
 
 1. Vào console.firebase.google.com, tạo project, bật Google Analytics (để Crashlytics hiện được số người dùng không gặp sự cố).
 2. Thêm app Android, package name `com.electrogo`. Tải google-services.json, đặt vào android/app/.
-3. Thêm app iOS (làm khi iOS đã hỗ trợ, xem trên): Bundle ID phải trùng Bundle ID đang build (xem PRODUCT_BUNDLE_IDENTIFIER trong Xcode, hoặc ELECTROGO_IOS_BUNDLE_ID khi build release). Tải GoogleService-Info.plist, đặt vào ios/ElectroGo/ rồi thêm vào Xcode (tick target ElectroGo).
+3. Thêm app iOS, Bundle ID phải trùng Bundle ID đang build (xem PRODUCT_BUNDLE_IDENTIFIER trong Xcode, hoặc ELECTROGO_IOS_BUNDLE_ID khi build release). Tải GoogleService-Info.plist, đặt đúng vào ios/ElectroGo/ (project Xcode đã trỏ sẵn tới đường dẫn này, không cần kéo vào Xcode).
 4. Trong Firebase, mục Crashlytics bấm Enable.
-5. Build lại app Android (thêm thư viện native nên phải phát hành host mới).
+5. Build lại app: Android `pnpm android`; iOS `cd ios && pod install` rồi `pnpm ios` (thêm thư viện native nên phải phát hành host mới).
    Xong khi: Firebase Console, Crashlytics, hiện app và báo "Waiting for your first crash" hoặc đã nhận báo cáo.
 
 Thử gửi lỗi: dùng bản Release (chế độ dev không gửi). Thêm tạm một nút gọi `crash(getCrashlytics())` (import từ `@react-native-firebase/crashlytics`), bấm cho app sập, mở lại app rồi đợi vài phút.
