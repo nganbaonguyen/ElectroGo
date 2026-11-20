@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "665963783374",
+    "project_id": "electrogo-cea0d",
+    "storage_bucket": "electrogo-cea0d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:665963783374:android:cf978ed6c3ad4bdddddc9f",
+        "android_client_info": {
+          "package_name": "com.electrogo"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC_voLw5vxk9pRYTqhU7p_oJ2gZOpJqoJ0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
