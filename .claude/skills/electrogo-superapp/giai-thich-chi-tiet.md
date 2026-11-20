@@ -1408,9 +1408,9 @@ Bước làm tay, ngoài repo. Mỗi bước có chỗ "xong khi" để biết �
 |                      |                                            | file có package_name là              |
 |                      |                                            | com.electrogo                        |
 +----------------------+--------------------------------------------+--------------------------------------+
-| 3. Chốt bundle ID    | Quyết id thật cho iOS (ví dụ               | Firebase gắn cấu hình với bundle ID. |
-| iOS                  | com.electrogo). Hiện project đang dùng     | Đổi sau khi đăng ký thì phải tạo lại |
-|                      | org.reactjs.native.example.ElectroGo (id   | app iOS và tải lại plist             |
+| 3. Bundle ID iOS     | Đã đổi thành com.electrogo trong project   | Firebase gắn cấu hình với bundle ID. |
+|                      | Xcode (trước đó là                         | Đổi sau khi đăng ký thì phải tạo lại |
+|                      | org.reactjs.native.example.ElectroGo, id   | app iOS và tải lại plist             |
 |                      | mặc định của template)                     |                                      |
 +----------------------+--------------------------------------------+--------------------------------------+
 | 4. Thêm app iOS      | Add app, chọn iOS, điền đúng bundle ID ở   | Plist có BUNDLE_ID phải trùng id     |
@@ -1421,12 +1421,20 @@ Bước làm tay, ngoài repo. Mỗi bước có chỗ "xong khi" để biết �
 |                      | GoogleService-Info.plist vào               | dẫn này, không cần kéo vào Xcode.    |
 |                      | ios/ElectroGo/                             | Thiếu plist thì iOS build lỗi        |
 +----------------------+--------------------------------------------+--------------------------------------+
-| 6. Bật Crashlytics   | Build, Crashlytics, Enable                 | Trước khi bật, Console chưa nhận báo |
+| 6. Giới hạn API key  | Google Cloud Console, APIs & Services,     | Repo public nên key trong file cấu   |
+|                      | Credentials: mở Android key rồi iOS key,   | hình ai cũng đọc được; giới hạn để   |
+|                      | mục Application restrictions chọn Android  | key chỉ dùng được từ app của bạn.    |
+|                      | apps (package com.electrogo cộng SHA-1)    | Xong khi: cột Restrictions ghi       |
+|                      | hoặc iOS apps (bundle ID com.electrogo),   | Android apps hoặc iOS apps           |
+|                      | Save                                       |                                      |
++----------------------+--------------------------------------------+--------------------------------------+
+| 7. Bật Crashlytics   | Build, Crashlytics, Enable                 | Trước khi bật, Console chưa nhận báo |
 |                      |                                            | cáo                                  |
 +----------------------+--------------------------------------------+--------------------------------------+
-| 7. Build lại và thử  | Android: pnpm android. iOS: cd ios, pod    | Xong khi: Crashlytics hiện app và    |
+| 8. Build lại và thử  | Android: pnpm android. iOS: cd ios, pod    | Xong khi: Crashlytics hiện app và    |
 |                      | install, rồi pnpm ios. Thử bằng bản        | báo đã nhận báo cáo đầu tiên (xem    |
-|                      | Release                                    | 13B.5 về cách thử)                   |
+|                      | Release                                    | 13B.5 về cách thử, và 13B.7 nếu báo  |
+|                      |                                            | thiếu dSYM)                          |
 +----------------------+--------------------------------------------+--------------------------------------+
 ```
 
@@ -1438,6 +1446,9 @@ Bước làm tay, ngoài repo. Mỗi bước có chỗ "xong khi" để biết �
 +========================================+================================+================================+
 | Cài hai thư viện bản 26.4.2            | package.json                   | Bản 27 không build được trên   |
 |                                        |                                | iOS (xem 13B.6)                |
++----------------------------------------+--------------------------------+--------------------------------+
+| iOS: đổi bundle ID thành com.electrogo | ios/ElectroGo.xcodeproj/projec | Khớp với Android và với app    |
+|                                        | t.pbxproj                      | đăng ký trên Firebase          |
 +----------------------------------------+--------------------------------+--------------------------------+
 | Android: plugin google-services và     | android/build.gradle,          | Chưa có file cấu hình thì      |
 | firebase-crashlytics, chỉ áp dụng khi  | android/app/build.gradle       | Android vẫn build, chỉ không   |
@@ -1487,8 +1498,12 @@ bắt lỗi JS không ai xử lý (qua bộ xử lý lỗi toàn cục). Nhưng 
 componentDidCatch.
 
 Thứ hai, vì sao dùng require bên trong try thay vì import ở đầu file. Nếu máy thiếu phần native của
-Firebase thì có thể ngay lúc import module đã ném lỗi và app sập từ lúc mở (chưa kiểm chứng trên máy thật). Bọc trong try thì lỗi được nuốt,
+Firebase thì ngay lúc import module đã ném lỗi và app sập từ lúc mở. Bọc trong try thì lỗi được nuốt,
 app vẫn chạy, chỉ không gửi báo cáo. Cách này còn giúp app chạy khi chưa có file cấu hình Firebase.
+
+Thử trên iOS simulator: build bản Release rồi cài và chạy bằng lệnh xcrun simctl (install, launch),
+không chạy từ Xcode, vì khi có debugger gắn vào thì Xcode giữ lại crash và Crashlytics không thấy. App
+sập sau 8 giây, mở lại một lần để báo cáo được gửi đi.
 
 Cách thử gửi lỗi: dùng bản Release (dev không gửi). Thêm tạm một nút gọi crash(getCrashlytics()) lấy từ
 thư viện crashlytics, bấm cho app sập, mở lại app, đợi vài phút. Báo cáo gửi ở lần mở sau, không phải
@@ -1551,33 +1566,45 @@ Kết luận: chọn bản 26.4.2. Đánh đổi là Firebase đã báo CocoaPod
 |                                      |                                 | Hai script này không cần cho    |
 |                                      |                                 | React Native                    |
 +--------------------------------------+---------------------------------+---------------------------------+
-| Gradle: SDK location not found (khi  | Máy chưa cài Android SDK        | Không phải lỗi dự án. Gradle đã |
-| thử trên máy làm tài liệu)           |                                 | tải được hai plugin trước khi   |
-|                                      |                                 | dừng ở đây. Build Android trên  |
-|                                      |                                 | máy có SDK                      |
+| Gradle: SDK location not found       | Thiếu file                      | Tạo local.properties với dòng   |
+|                                      | android/local.properties dù SDK | sdk.dir=đường dẫn SDK. File này |
+|                                      | có sẵn ở ~/Library/Android/sdk  | của riêng từng máy, đã cho vào  |
+|                                      |                                 | .gitignore, không commit        |
++--------------------------------------+---------------------------------+---------------------------------+
+| Máy ảo Android: Cannot find AVD      | Máy ảo đã tạo nhưng chưa có     | Android Studio, Device Manager: |
+| system path, system-images ... is    | (hoặc mất) system image         | tạo máy ảo mới (Pixel 8), tải   |
+| not a valid directory                |                                 | system image API 34 arm64-v8a   |
++--------------------------------------+---------------------------------+---------------------------------+
+| Firebase iOS báo This app has 1      | Firebase đã nhận crash nhưng    | Tải thủ công: ios/Pods/Firebase |
+| unprocessed crash. Upload 1 dSYM     | chưa có dSYM. Bước tự tải trong | Crashlytics/upload-symbols -gsp |
+| file to process them                 | lúc build không đưa dSYM lên    | ios/ElectroGo/GoogleService-    |
+|                                      | (bản build simulator)           | Info.plist -p ios đường dẫn tới |
+|                                      |                                 | ElectroGo.app.dSYM. Kiểm tra    |
+|                                      |                                 | bằng dwarfdump --uuid: UUID của |
+|                                      |                                 | app và dSYM phải trùng          |
 +--------------------------------------+---------------------------------+---------------------------------+
 ```
 
 ### 13B.8 Đã kiểm chứng gì, còn hạn chế gì
 
-Đã kiểm chứng: TypeScript không lỗi. Gradle tải được hai plugin google-services và firebase-crashlytics.
-pod install thành công. Build iOS simulator (arm64, Debug) thành công khi có một file plist giả (đã xóa,
-không đưa vào repo).
+Đã kiểm chứng: TypeScript không lỗi. Android build Debug và Release thành công, có chạy các bước
+processDebugGoogleServices và injectCrashlytics. iOS: pod install thành công, build Debug và Release
+trên simulator (arm64) thành công. iOS gửi lỗi thật: app Release trên simulator sập, Firebase nhận được
+crash; sau khi tải dSYM thủ công thì cảnh báo thiếu dSYM biến mất. Hai API key (Android, iOS) đã giới
+hạn theo app và kiểm chứng bằng lệnh gọi Firebase Installations API: không khai báo app hoặc sai
+package, bundle thì 403, đúng thì 200.
 
 ```
 +------------------------------+---------------------------------------+-----------------------------------+
 | Chưa kiểm chứng / hạn chế    | Hiện trạng                            | Hướng xử lý                       |
 +==============================+=======================================+===================================+
-| Build Android                | Máy làm tài liệu chưa có Android SDK  | Build trên máy có SDK, kiểm tra   |
-|                              |                                       | plugin áp dụng đúng khi có        |
-|                              |                                       | google-services.json              |
+| Gửi crash Android thật       | Đã build app-release.apk nhưng máy    | Tạo máy ảo, cài apk, mở app, làm  |
+|                              | chưa có máy ảo chạy được (thiếu       | sập một lần rồi xem Crashlytics   |
+|                              | system image)                         | của app Android                   |
 +------------------------------+---------------------------------------+-----------------------------------+
-| Gửi crash thật lên Firebase  | Chưa thử (chờ plist và json thật)     | Làm theo bước 7 ở 13B.3 với bản   |
-|                              |                                       | Release                           |
-+------------------------------+---------------------------------------+-----------------------------------+
-| Tải dSYM lên Firebase        | Script do pod install thêm, chưa thấy | Kiểm tra log build Release hoặc   |
-|                              | chạy với cấu hình thật                | Archive; thiếu dSYM thì báo cáo   |
-|                              |                                       | iOS chỉ có địa chỉ                |
+| Tải dSYM tự động khi build   | Bản build simulator không tự tải;     | Kiểm tra tab dSYMs sau khi phát   |
+| máy thật hoặc Archive        | trường hợp máy thật chưa thử          | hành; thiếu thì tải thủ công như  |
+|                              |                                       | ở 13B.7                           |
 +------------------------------+---------------------------------------+-----------------------------------+
 | Stack lỗi JS                 | Re.Pack không có source map tải lên   | Dùng thuộc tính miniApp để khoanh |
 |                              | Crashlytics, vị trí hiện trong file   | vùng; sau này tải source map      |
@@ -1586,9 +1613,12 @@ không đưa vào repo).
 | Version mini app trong báo   | Host chưa biết version mini app đang  | Gắn khi host đọc manifest (xem    |
 | cáo                          | nạp, nên chưa gắn được                | câu hỏi còn mở trong SKILL.md)    |
 +------------------------------+---------------------------------------+-----------------------------------+
-| File cấu hình có API key     | google-services.json và plist chứa    | Quyết định commit hay không; nếu  |
-|                              | API key của project                   | commit, giới hạn API key theo     |
-|                              |                                       | package/bundle ID                 |
+| API key trong file cấu hình  | Hai file đã đưa vào repo public.      | Khi có khóa phát hành thật hoặc   |
+|                              | Android key giới hạn theo package     | dùng Play App Signing, thêm SHA-1 |
+|                              | com.electrogo và SHA-1 của khóa debug | tương ứng vào Android key, không  |
+|                              | (khóa công khai chuẩn của React       | thì Crashlytics bản phát hành bị  |
+|                              | Native); iOS key giới hạn theo bundle | chặn                              |
+|                              | ID                                    |                                   |
 +------------------------------+---------------------------------------+-----------------------------------+
 | Jest                         | Đã hỏng từ trước khi thêm Firebase    | Sửa riêng, không liên quan        |
 |                              | (lỗi cấu hình ở bước nạp preset)      | Crashlytics                       |
@@ -1618,6 +1648,12 @@ Hỏi: Vì sao không dùng bản Firebase mới nhất?
 Đáp: Bản 27 bắt buộc dynamic frameworks và tôi đã thử hai cách đều không build được với React Native
 0.88.1, nên dùng bản 26.4.2 với CocoaPods. Đánh đổi là CocoaPods của Firebase sắp ngừng ra bản mới, nên
 cần nâng lên khi React Native sửa được.
+
+Hỏi: dSYM là gì, vì sao Crashlytics cần?
+
+Đáp: dSYM là bảng dịch địa chỉ trong mã máy sang tên hàm và số dòng, sinh ra lúc build. Không có thì báo
+cáo crash iOS chỉ có địa chỉ số, đọc không ra. Firebase hiện cảnh báo thiếu dSYM nên dễ phát hiện; dSYM
+phải khớp UUID với bản app đã sập.
 
 Hỏi: Chưa có file cấu hình thì app có chạy không?
 

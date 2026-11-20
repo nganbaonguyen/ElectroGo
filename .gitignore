@@ -29,3 +29,7 @@ release.keystore
 android/app/.cxx/
 android/build/
 scripts/build.local.env
+
+# Riêng từng máy (Android Studio)
+android/local.properties
+android/.idea/

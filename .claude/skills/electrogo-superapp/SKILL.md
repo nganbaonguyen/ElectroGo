@@ -259,12 +259,16 @@ Người dùng tự làm trên Firebase:
 
 1. Vào console.firebase.google.com, tạo project, bật Google Analytics (để Crashlytics hiện được số người dùng không gặp sự cố).
 2. Thêm app Android, package name `com.electrogo`. Tải google-services.json, đặt vào android/app/.
-3. Thêm app iOS, Bundle ID phải trùng Bundle ID đang build (xem PRODUCT_BUNDLE_IDENTIFIER trong Xcode, hoặc ELECTROGO_IOS_BUNDLE_ID khi build release). Tải GoogleService-Info.plist, đặt đúng vào ios/ElectroGo/ (project Xcode đã trỏ sẵn tới đường dẫn này, không cần kéo vào Xcode).
+3. Thêm app iOS, Bundle ID `com.electrogo` (đã đặt trong project Xcode, phải trùng Bundle ID đang build; ELECTROGO_IOS_BUNDLE_ID khi build release có thể ghi đè). Tải GoogleService-Info.plist, đặt đúng vào ios/ElectroGo/ (project Xcode đã trỏ sẵn tới đường dẫn này, không cần kéo vào Xcode).
 4. Trong Firebase, mục Crashlytics bấm Enable.
-5. Build lại app: Android `pnpm android`; iOS `cd ios && pod install` rồi `pnpm ios` (thêm thư viện native nên phải phát hành host mới).
+5. Giới hạn API key (repo public): Google Cloud Console, APIs & Services, Credentials, mở Android key và iOS key, mục Application restrictions chọn Android apps (package `com.electrogo` + SHA-1) hoặc iOS apps (bundle ID `com.electrogo`), Save. Khi có khóa phát hành thật hoặc Play App Signing, thêm SHA-1 tương ứng vào Android key.
+   Xong khi: cột Restrictions của key ghi Android apps hoặc iOS apps.
+6. Build lại app: Android `pnpm android`; iOS `cd ios && pod install` rồi `pnpm ios` (thêm thư viện native nên phải phát hành host mới).
    Xong khi: Firebase Console, Crashlytics, hiện app và báo "Waiting for your first crash" hoặc đã nhận báo cáo.
 
-Thử gửi lỗi: dùng bản Release (chế độ dev không gửi). Thêm tạm một nút gọi `crash(getCrashlytics())` (import từ `@react-native-firebase/crashlytics`), bấm cho app sập, mở lại app rồi đợi vài phút.
+Thiếu dSYM trên iOS: Firebase báo "1 unprocessed crash. Upload 1 dSYM file". Bước tự tải trong lúc build không đưa dSYM lên với bản build simulator, nên tải thủ công: `ios/Pods/FirebaseCrashlytics/upload-symbols -gsp ios/ElectroGo/GoogleService-Info.plist -p ios <đường dẫn ElectroGo.app.dSYM>`. UUID của app và dSYM (xem bằng `dwarfdump --uuid`) phải trùng.
+
+Thử gửi lỗi: dùng bản Release (chế độ dev không gửi). Trên iOS simulator, cài và chạy bằng `xcrun simctl` (không chạy từ Xcode vì debugger giữ crash). Thêm tạm một nút gọi `crash(getCrashlytics())` (import từ `@react-native-firebase/crashlytics`), bấm cho app sập, mở lại app rồi đợi vài phút.
 
 Giới hạn: lỗi JS hiện vị trí trong file bundle (Re.Pack chưa có source map tải lên Crashlytics), nên dùng thuộc tính `miniApp` để lọc theo mini app. Host chưa biết version của mini app đang nạp nên chưa gắn version vào báo cáo (xem "Câu hỏi còn mở").
 
