@@ -10,11 +10,11 @@
 | Khác gì SKILL.md  | SKILL.md là tài liệu làm việc (setup, quy tắc). File này giải thích vì sao, hoạt     |
 |                   | động thế nào, kèm câu hỏi phỏng vấn và gợi ý trả lời                                 |
 +-------------------+--------------------------------------------------------------------------------------+
-| Gồm hai phần      | Phần I (mục 1 đến 13A): dự án ElectroGo. Phần II (mục 14 đến 27): kiến thức React    |
+| Gồm hai phần      | Phần I (mục 1 đến 13B): dự án ElectroGo. Phần II (mục 14 đến 27): kiến thức React    |
 |                   | Native chung, đã sửa từ ghi chú cá nhân                                              |
 +-------------------+--------------------------------------------------------------------------------------+
-| Cách đọc          | Hỏi về dự án: mục 1, 3, 4, 7, 9, 10, 13A. Hỏi về React Native chung: đọc mục 14      |
-|                   | trước, rồi theo chủ đề trong mục lục                                                 |
+| Cách đọc          | Hỏi về dự án: mục 1, 3, 4, 7, 9, 10, 13A, 13B. Hỏi về React Native chung: đọc mục    |
+|                   | 14 trước, rồi theo chủ đề trong mục lục                                              |
 +-------------------+--------------------------------------------------------------------------------------+
 | Tìm nhanh một mục | Cmd+Shift+O rồi gõ số mục hoặc tên mục                                               |
 +-------------------+--------------------------------------------------------------------------------------+
@@ -52,6 +52,8 @@
 +------+------------+------------------------------------------------------------------------+
 | I    | 13A        | Phát hành qua web: upload tar, tích LIVE, build apk/aab/ipa            |
 +------+------------+------------------------------------------------------------------------+
+| I    | 13B        | Firebase Crashlytics: setup từng bước, lỗi đã gặp, câu hỏi             |
++------+------------+------------------------------------------------------------------------+
 | II   | 14         | Bảng sửa nhanh: ghi chú gốc cần chỉnh                                  |
 +------+------------+------------------------------------------------------------------------+
 | II   | 15         | React cơ bản: lifecycle, hooks, useEffect, memo                        |
@@ -82,7 +84,7 @@
 +------+------------+------------------------------------------------------------------------+
 ```
 
-# PHẦN I. DỰ ÁN ELECTROGO (mục 1 đến 13A)
+# PHẦN I. DỰ ÁN ELECTROGO (mục 1 đến 13B)
 
 ## 1. Câu trả lời ngắn: nói được trong 30 giây và 2 phút
 
@@ -1347,6 +1349,280 @@ hỏi bản LIVE thành các file JSON sinh sẵn. Đổi lại phải chấp nh
 Hỏi: Làm sao biết app đã nạp đúng bản vừa upload?
 Đáp: Mỗi lần build mini app tăng một số build, nhúng vào bundle và hiện ở chân màn hình vài giây. Số này đi
 theo git nên nhiều máy dùng chung một bộ đếm. Upload xong mở lại mini app thấy số mới là biết đã nạp đúng.
+
+## 13B. Firebase Crashlytics: setup từng bước và vì sao
+
+Mục này giải thích từng bước setup Crashlytics (báo cáo lỗi), vì sao làm vậy, và các lỗi thật đã gặp khi
+làm. Danh sách bước ngắn gọn và quy tắc nằm ở skill electrogo-superapp, Phần F.
+
+### 13B.1 Bài toán
+
+App chạy trên máy người dùng và sập thì ta không biết gì: không thấy màn hình, không có log. Crashlytics
+(của Firebase) thu báo cáo sập: sập ở đâu, máy nào, bản app nào, bao nhiêu người bị. Với super app còn
+thêm hai câu hỏi: sập do mini app nào, và do bản nào của mini app đó. Vì mini app cập nhật độc lập với
+host nên không thể chỉ nhìn số bản của host.
+
+### 13B.2 Cái gì nằm ở đâu
+
+```
++------------------------------+-------------------------------------+-------------------------------------+
+| Thành phần                   | Nằm ở                               | Vì sao                              |
++==============================+=====================================+=====================================+
+| SDK native Crashlytics       | Host (thư mục ios, android)         | Là code native: chỉ phát hành host  |
+|                              |                                     | mới đưa được vào máy. Mini app là   |
+|                              |                                     | JS nên không mang theo được         |
++------------------------------+-------------------------------------+-------------------------------------+
+| Hàm gửi lỗi (crashlytics.ts) | Host, src/shared/monitoring         | Host là nơi duy nhất thấy cả hai    |
+|                              |                                     | chuyện: mini app sập khi đang chạy  |
+|                              |                                     | và mini app tải thất bại            |
++------------------------------+-------------------------------------+-------------------------------------+
+| File cấu hình Firebase       | Host: android/app/google-           | Gắn app với project Firebase bằng   |
+|                              | services.json,                      | package name (Android) và bundle ID |
+|                              | ios/ElectroGo/GoogleService-        | (iOS)                               |
+|                              | Info.plist                          |                                     |
++------------------------------+-------------------------------------+-------------------------------------+
+| Mini app                     | Không làm gì                        | Host tự gắn tên mini app (work,     |
+|                              |                                     | sale) vào mỗi báo cáo để lọc trên   |
+|                              |                                     | Firebase                            |
++------------------------------+-------------------------------------+-------------------------------------+
+```
+
+### 13B.3 Các bước trên Firebase Console
+
+Bước làm tay, ngoài repo. Mỗi bước có chỗ "xong khi" để biết đã đúng.
+
+```
++----------------------+--------------------------------------------+--------------------------------------+
+| Bước                 | Làm gì                                     | Vì sao / xong khi                    |
++======================+============================================+======================================+
+| 1. Tạo project       | console.firebase.google.com, Create a      | Analytics cho Crashlytics số người   |
+|                      | project, tên ElectroGo. Bước Google        | dùng không gặp sự cố. Xong khi: thấy |
+|                      | Analytics: bật, chọn tài khoản (Default    | trang Project Overview, gói Spark    |
+|                      | Account for Firebase hoặc tạo mới) rồi     | (miễn phí)                           |
+|                      | Create project                             |                                      |
++----------------------+--------------------------------------------+--------------------------------------+
+| 2. Thêm app Android  | Add app, chọn Android, package name        | Package name phải trùng              |
+|                      | com.electrogo, bỏ trống SHA-1, Register    | applicationId trong                  |
+|                      | app, tải google-services.json              | android/app/build.gradle, Firebase   |
+|                      |                                            | đối chiếu hai giá trị này. Xong khi: |
+|                      |                                            | file có package_name là              |
+|                      |                                            | com.electrogo                        |
++----------------------+--------------------------------------------+--------------------------------------+
+| 3. Chốt bundle ID    | Quyết id thật cho iOS (ví dụ               | Firebase gắn cấu hình với bundle ID. |
+| iOS                  | com.electrogo). Hiện project đang dùng     | Đổi sau khi đăng ký thì phải tạo lại |
+|                      | org.reactjs.native.example.ElectroGo (id   | app iOS và tải lại plist             |
+|                      | mặc định của template)                     |                                      |
++----------------------+--------------------------------------------+--------------------------------------+
+| 4. Thêm app iOS      | Add app, chọn iOS, điền đúng bundle ID ở   | Plist có BUNDLE_ID phải trùng id     |
+|                      | bước 3, Register app, tải GoogleService-   | đang build. Xong khi: mở plist thấy  |
+|                      | Info.plist                                 | BUNDLE_ID đúng                       |
++----------------------+--------------------------------------------+--------------------------------------+
+| 5. Đặt file vào repo | google-services.json vào android/app/.     | Project Xcode đã trỏ sẵn tới đường   |
+|                      | GoogleService-Info.plist vào               | dẫn này, không cần kéo vào Xcode.    |
+|                      | ios/ElectroGo/                             | Thiếu plist thì iOS build lỗi        |
++----------------------+--------------------------------------------+--------------------------------------+
+| 6. Bật Crashlytics   | Build, Crashlytics, Enable                 | Trước khi bật, Console chưa nhận báo |
+|                      |                                            | cáo                                  |
++----------------------+--------------------------------------------+--------------------------------------+
+| 7. Build lại và thử  | Android: pnpm android. iOS: cd ios, pod    | Xong khi: Crashlytics hiện app và    |
+|                      | install, rồi pnpm ios. Thử bằng bản        | báo đã nhận báo cáo đầu tiên (xem    |
+|                      | Release                                    | 13B.5 về cách thử)                   |
++----------------------+--------------------------------------------+--------------------------------------+
+```
+
+### 13B.4 Việc đã làm trong repo, từng việc và vì sao
+
+```
++----------------------------------------+--------------------------------+--------------------------------+
+| Việc                                   | Ở đâu                          | Vì sao                         |
++========================================+================================+================================+
+| Cài hai thư viện bản 26.4.2            | package.json                   | Bản 27 không build được trên   |
+|                                        |                                | iOS (xem 13B.6)                |
++----------------------------------------+--------------------------------+--------------------------------+
+| Android: plugin google-services và     | android/build.gradle,          | Chưa có file cấu hình thì      |
+| firebase-crashlytics, chỉ áp dụng khi  | android/app/build.gradle       | Android vẫn build, chỉ không   |
+| có google-services.json                |                                | gửi báo cáo                    |
++----------------------------------------+--------------------------------+--------------------------------+
+| iOS: gọi FirebaseApp.configure() chỉ   | ios/ElectroGo/AppDelegate.swif | Gọi configure khi thiếu plist  |
+| khi có GoogleService-Info.plist        | t                              | sẽ làm app sập lúc mở          |
++----------------------------------------+--------------------------------+--------------------------------+
+| iOS: dùng Firebase qua CocoaPods       | ios/Podfile                    | Tránh dynamic frameworks mà    |
+| (RNFirebaseDisableSPM),                |                                | React Native 0.88.1 không      |
+| use_modular_headers!, nâng iOS tối     |                                | build được. Pod phụ khai báo   |
+| thiểu của pod phụ lên 15.0             |                                | 9.0, 12.0 thấp hơn mức Xcode   |
+|                                        |                                | hỗ trợ                         |
++----------------------------------------+--------------------------------+--------------------------------+
+| iOS: khai báo GoogleService-Info.plist | ios/ElectroGo.xcodeproj/projec | Script tải dSYM của            |
+| trong Copy Bundle Resources            | t.pbxproj                      | Crashlytics đọc plist trong    |
+|                                        |                                | app đã build, chỉ có file      |
+|                                        |                                | trong thư mục là chưa đủ       |
++----------------------------------------+--------------------------------+--------------------------------+
+| Bước tải dSYM lên Firebase             | Do pod install tự thêm vào     | dSYM là bảng dịch địa chỉ sang |
+|                                        | target (tên RNFB Crashlytics   | tên hàm. Không có thì báo cáo  |
+|                                        | Configuration)                 | crash iOS chỉ có địa chỉ.      |
+|                                        |                                | Không phải thêm tay            |
++----------------------------------------+--------------------------------+--------------------------------+
+| Hàm initMonitoring, reportMiniAppError | src/shared/monitoring/crashlyt | Một chỗ duy nhất đụng tới thư  |
+|                                        | ics.ts                         | viện Firebase, phần khác chỉ   |
+|                                        |                                | gọi hai hàm này                |
++----------------------------------------+--------------------------------+--------------------------------+
+| Gọi hai hàm trên                       | App.tsx,                       | Mở app thì khởi tạo. Mini app  |
+|                                        | MiniAppErrorBoundary.tsx,      | sập (ErrorBoundary) và mini    |
+|                                        | RootNavigator.tsx              | app tải thất bại (MiniAppHost) |
+|                                        |                                | đều được ghi                   |
++----------------------------------------+--------------------------------+--------------------------------+
+```
+
+### 13B.5 Code JS hoạt động ra sao
+
+Hàm initMonitoring chỉ bật thu thập khi không phải chế độ dev (biến __DEV__), để lỗi lúc đang viết code
+không lẫn vào báo cáo thật. Hàm reportMiniAppError gắn thuộc tính miniApp rồi ghi lỗi, nên trên Firebase
+lọc được theo mini app.
+
+Hai điểm hay bị hỏi:
+
+Thứ nhất, vì sao phải ghi lỗi thủ công trong componentDidCatch. Crashlytics tự bắt crash native, và tự
+bắt lỗi JS không ai xử lý (qua bộ xử lý lỗi toàn cục). Nhưng lỗi đã bị ErrorBoundary bắt thì không còn
+đi tới bộ xử lý toàn cục nữa, nên Crashlytics không thấy. Muốn thấy phải gọi recordError ngay trong
+componentDidCatch.
+
+Thứ hai, vì sao dùng require bên trong try thay vì import ở đầu file. Nếu máy thiếu phần native của
+Firebase thì có thể ngay lúc import module đã ném lỗi và app sập từ lúc mở (chưa kiểm chứng trên máy thật). Bọc trong try thì lỗi được nuốt,
+app vẫn chạy, chỉ không gửi báo cáo. Cách này còn giúp app chạy khi chưa có file cấu hình Firebase.
+
+Cách thử gửi lỗi: dùng bản Release (dev không gửi). Thêm tạm một nút gọi crash(getCrashlytics()) lấy từ
+thư viện crashlytics, bấm cho app sập, mở lại app, đợi vài phút. Báo cáo gửi ở lần mở sau, không phải
+ngay lúc sập.
+
+### 13B.6 Vì sao dùng bản 26.4.2, không dùng bản 27 mới nhất
+
+Đây là chuyện thật xảy ra ngày 20/11/2026 và là ví dụ tốt về việc cân nhắc đánh đổi. Bản 27 của React
+Native Firebase chỉ lấy Firebase qua Swift Package Manager và bắt buộc use_frameworks dạng dynamic. Với
+React Native 0.88.1, cả hai cách thử đều không build được:
+
+```
++----------------------------------------------------+-----------------------------------------------------+
+| Cách thử                                           | Kết quả                                             |
++====================================================+=====================================================+
+| Dynamic frameworks, giữ lõi React Native dựng sẵn  | Lỗi liên kết ở ReactCodegen: thiếu symbol           |
+|                                                    | facebook::react::Sealable                           |
++----------------------------------------------------+-----------------------------------------------------+
+| Dynamic frameworks, tắt lõi dựng sẵn               | Lỗi biên dịch: không tìm thấy header                |
+| (RCT_USE_PREBUILT_RNCORE=0), React Native biên     | react/debug/react_native_assert.h                   |
+| dịch từ mã nguồn                                   |                                                     |
++----------------------------------------------------+-----------------------------------------------------+
+| Bản 26.4.2 với CocoaPods (RNFirebaseDisableSPM),   | Build thành công trên iOS simulator (arm64)         |
+| không dùng dynamic                                 |                                                     |
++----------------------------------------------------+-----------------------------------------------------+
+```
+
+Kết luận: chọn bản 26.4.2. Đánh đổi là Firebase đã báo CocoaPods sẽ không có bản mới sau tháng 10/2026
+(các bản đang dùng vẫn cài được). Khi React Native sửa được lỗi dynamic frameworks thì nâng lên 27.
+
+### 13B.7 Lỗi thật đã gặp và cách xử lý
+
+```
++--------------------------------------+---------------------------------+---------------------------------+
+| Triệu chứng                          | Nguyên nhân                     | Cách sửa                        |
++======================================+=================================+=================================+
+| ld: Undefined symbols                | Dynamic frameworks không liên   | Không dùng dynamic: dùng        |
+| facebook::react::Sealable,           | kết được với lõi React Native   | Firebase 26.4.2 với CocoaPods   |
+| ReactCodegen                         | dựng sẵn                        |                                 |
++--------------------------------------+---------------------------------+---------------------------------+
+| fatal error:                         | Tắt lõi dựng sẵn cùng dynamic   | Như trên, bỏ                    |
+| react/debug/react_native_assert.h    | frameworks                      | RCT_USE_PREBUILT_RNCORE=0       |
+| file not found                       |                                 |                                 |
++--------------------------------------+---------------------------------+---------------------------------+
+| error: iOS Simulator deployment      | Pod phụ của Firebase khai báo   | Podfile, post_install: nâng mọi |
+| target is set to 9.0 (hoặc 12.0),    | iOS tối thiểu quá thấp          | pod dưới 15.0 lên 15.0          |
+| range 15.0 đến 27.1 (PromisesSwift,  |                                 |                                 |
+| nanopb, GoogleUtilities)             |                                 |                                 |
++--------------------------------------+---------------------------------+---------------------------------+
+| error: Could not get GOOGLE_APP_ID   | Chưa có GoogleService-          | Đặt plist vào ios/ElectroGo/    |
+| in Google Services file from build   | Info.plist trong app đã build   | (Xcode đã trỏ sẵn)              |
+| environment                          |                                 |                                 |
++--------------------------------------+---------------------------------+---------------------------------+
+| error: Build input file cannot be    | Tham chiếu trong project Xcode  | Đã sửa path thành               |
+| found: ios/GoogleService-Info.plist  | trỏ nhầm thư mục ios thay vì    | ElectroGo/GoogleService-        |
+|                                      | ios/ElectroGo                   | Info.plist                      |
++--------------------------------------+---------------------------------+---------------------------------+
+| ERR_PNPM_IGNORED_BUILDS khi pnpm add | pnpm 10 chặn script cài đặt của | Gói vẫn được cài và ghi vào     |
+| (@firebase/util, protobufjs)         | hai gói này                     | package.json, pnpm-lock.yaml.   |
+|                                      |                                 | Hai script này không cần cho    |
+|                                      |                                 | React Native                    |
++--------------------------------------+---------------------------------+---------------------------------+
+| Gradle: SDK location not found (khi  | Máy chưa cài Android SDK        | Không phải lỗi dự án. Gradle đã |
+| thử trên máy làm tài liệu)           |                                 | tải được hai plugin trước khi   |
+|                                      |                                 | dừng ở đây. Build Android trên  |
+|                                      |                                 | máy có SDK                      |
++--------------------------------------+---------------------------------+---------------------------------+
+```
+
+### 13B.8 Đã kiểm chứng gì, còn hạn chế gì
+
+Đã kiểm chứng: TypeScript không lỗi. Gradle tải được hai plugin google-services và firebase-crashlytics.
+pod install thành công. Build iOS simulator (arm64, Debug) thành công khi có một file plist giả (đã xóa,
+không đưa vào repo).
+
+```
++------------------------------+---------------------------------------+-----------------------------------+
+| Chưa kiểm chứng / hạn chế    | Hiện trạng                            | Hướng xử lý                       |
++==============================+=======================================+===================================+
+| Build Android                | Máy làm tài liệu chưa có Android SDK  | Build trên máy có SDK, kiểm tra   |
+|                              |                                       | plugin áp dụng đúng khi có        |
+|                              |                                       | google-services.json              |
++------------------------------+---------------------------------------+-----------------------------------+
+| Gửi crash thật lên Firebase  | Chưa thử (chờ plist và json thật)     | Làm theo bước 7 ở 13B.3 với bản   |
+|                              |                                       | Release                           |
++------------------------------+---------------------------------------+-----------------------------------+
+| Tải dSYM lên Firebase        | Script do pod install thêm, chưa thấy | Kiểm tra log build Release hoặc   |
+|                              | chạy với cấu hình thật                | Archive; thiếu dSYM thì báo cáo   |
+|                              |                                       | iOS chỉ có địa chỉ                |
++------------------------------+---------------------------------------+-----------------------------------+
+| Stack lỗi JS                 | Re.Pack không có source map tải lên   | Dùng thuộc tính miniApp để khoanh |
+|                              | Crashlytics, vị trí hiện trong file   | vùng; sau này tải source map      |
+|                              | bundle                                | riêng                             |
++------------------------------+---------------------------------------+-----------------------------------+
+| Version mini app trong báo   | Host chưa biết version mini app đang  | Gắn khi host đọc manifest (xem    |
+| cáo                          | nạp, nên chưa gắn được                | câu hỏi còn mở trong SKILL.md)    |
++------------------------------+---------------------------------------+-----------------------------------+
+| File cấu hình có API key     | google-services.json và plist chứa    | Quyết định commit hay không; nếu  |
+|                              | API key của project                   | commit, giới hạn API key theo     |
+|                              |                                       | package/bundle ID                 |
++------------------------------+---------------------------------------+-----------------------------------+
+| Jest                         | Đã hỏng từ trước khi thêm Firebase    | Sửa riêng, không liên quan        |
+|                              | (lỗi cấu hình ở bước nạp preset)      | Crashlytics                       |
++------------------------------+---------------------------------------+-----------------------------------+
+```
+
+### 13B.9 Câu hỏi phỏng vấn
+
+Hỏi: Crashlytics đặt ở host hay mini app, vì sao?
+
+Đáp: Ở host. Crashlytics có phần native, mà chỉ bản cài của host mới đưa được code native vào máy; mini
+app chỉ là gói JS tải lúc chạy. Host cũng là nơi duy nhất biết mini app nào đang chạy, nên host gắn tên
+mini app vào báo cáo.
+
+Hỏi: ErrorBoundary đã bắt lỗi rồi, sao còn gọi recordError?
+
+Đáp: Lỗi đã bị ErrorBoundary bắt thì không đi tới bộ xử lý lỗi toàn cục nên Crashlytics không tự thấy.
+Phải ghi thủ công trong componentDidCatch.
+
+Hỏi: Làm sao biết crash do mini app nào?
+
+Đáp: Mỗi lần ghi lỗi tôi gắn thuộc tính miniApp (work, sale) rồi lọc trên Firebase. Phần còn thiếu là
+gắn thêm version mini app, vì host chưa đọc version từ manifest.
+
+Hỏi: Vì sao không dùng bản Firebase mới nhất?
+
+Đáp: Bản 27 bắt buộc dynamic frameworks và tôi đã thử hai cách đều không build được với React Native
+0.88.1, nên dùng bản 26.4.2 với CocoaPods. Đánh đổi là CocoaPods của Firebase sắp ngừng ra bản mới, nên
+cần nâng lên khi React Native sửa được.
+
+Hỏi: Chưa có file cấu hình thì app có chạy không?
+
+Đáp: Android vẫn build và chạy (plugin chỉ bật khi có file). iOS thì build lỗi vì project đã khai báo
+plist là tài nguyên bắt buộc; chạy thì không sập vì configure chỉ gọi khi có plist.
 
 # PHẦN II. KIẾN THỨC REACT NATIVE CHUNG (mục 14 đến 27)
 
@@ -2971,6 +3247,10 @@ Quan trọng: chỉ nói con số thật. Ví dụ mẫu trong ghi chú gốc (5
   thời gian.
 - Mục 15.3A và 15.4A (vòng đời class, useEffect) có ví dụ lấy từ code thật: MiniAppErrorBoundary, MiniAppHost,
   useAsync, useStack, BuildStamp, MiniNavigator. Đổi các file này thì kiểm tra lại bảng ví dụ ở 15.4A.
+- Mục 13B giải thích setup Firebase Crashlytics và lỗi thật khi làm (ngày 20/11/2026). Đổi package.json (version
+  @react-native-firebase), ios/Podfile, AppDelegate.swift, android/build.gradle, android/app/build.gradle hoặc
+  src/shared/monitoring/crashlytics.ts thì sửa mục 13B và Phần F của SKILL.md. Khi nâng Firebase lên bản 27, cập nhật
+  13B.6 và 13B.7.
 - Mục 13A giải thích hệ phát hành (web phân phối, LIVE, build host, GitHub Pages ở 13A.8). Đổi src/app/deploy.ts,
   remotes.ts, scripts/build-*.sh, scripts/deploy-url.sh, server/pages.js hoặc API của web thì sửa mục 13A, bảng
   lỗi ở mục 8 và skill release-deploy. Các bước làm chỉ ghi ở release-deploy, ở đây chỉ giải thích vì sao.
