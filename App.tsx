@@ -8,6 +8,9 @@
 import React from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import RootNavigator from './src/app/RootNavigator';
+import {initMonitoring} from './src/shared/monitoring/crashlytics';
+
+initMonitoring();
 
 function App() {
   return (

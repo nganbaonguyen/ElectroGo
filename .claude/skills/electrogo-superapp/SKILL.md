@@ -240,6 +240,34 @@ Cách đang dùng: **web phân phối** (upload file .tar, tích LIVE, host hỏ
 +-----------------+--------------------------------------+-------------------------------------------------+
 ```
 
+### Phần F. Firebase Crashlytics (báo cáo lỗi)
+
+Crashlytics là thư viện native nên chỉ cài ở host; mini app không phải làm gì (host tự gắn tên mini app vào báo cáo).
+
+Đã có trong repo:
+
+- Thư viện: `@react-native-firebase/app` và `@react-native-firebase/crashlytics` (cùng version 27.1.1) ở dependencies của host.
+- `src/shared/monitoring/crashlytics.ts`: `initMonitoring()` (gọi ở App.tsx, chế độ dev không gửi báo cáo) và `reportMiniAppError()` (gọi ở MiniAppErrorBoundary và khi tải mini app lỗi, kèm thuộc tính `miniApp`).
+- Android: plugin `google-services` và `firebase-crashlytics` khai báo ở android/build.gradle; android/app/build.gradle chỉ áp dụng khi có file android/app/google-services.json.
+- iOS: CHƯA có. react-native.config.js đang đặt `ios: null` cho hai thư viện Firebase nên iOS không nạp chúng và build như cũ; `crashlytics.ts` dùng `require` trong try nên iOS không sập.
+
+Lý do iOS chưa có: React Native Firebase 27 bắt buộc `use_frameworks! :linkage => :dynamic`. Thử với React Native 0.88.1 đều lỗi liên kết (đã thử ngày 2026-11-20): giữ lõi dựng sẵn thì ReactCodegen báo thiếu symbol `facebook::react::Sealable`; tắt lõi dựng sẵn (`RCT_USE_PREBUILT_RNCORE=0`) thì báo thiếu header `react/debug/react_native_assert.h`. Hướng chưa thử: dùng bản React Native Firebase cũ hơn (còn dùng CocoaPods, không bắt buộc dynamic), hoặc đợi bản React Native/Firebase sửa.
+
+Chưa có file google-services.json thì Android vẫn build và chạy, chỉ không gửi báo cáo.
+
+Người dùng tự làm trên Firebase:
+
+1. Vào console.firebase.google.com, tạo project, bật Google Analytics (để Crashlytics hiện được số người dùng không gặp sự cố).
+2. Thêm app Android, package name `com.electrogo`. Tải google-services.json, đặt vào android/app/.
+3. Thêm app iOS (làm khi iOS đã hỗ trợ, xem trên): Bundle ID phải trùng Bundle ID đang build (xem PRODUCT_BUNDLE_IDENTIFIER trong Xcode, hoặc ELECTROGO_IOS_BUNDLE_ID khi build release). Tải GoogleService-Info.plist, đặt vào ios/ElectroGo/ rồi thêm vào Xcode (tick target ElectroGo).
+4. Trong Firebase, mục Crashlytics bấm Enable.
+5. Build lại app Android (thêm thư viện native nên phải phát hành host mới).
+   Xong khi: Firebase Console, Crashlytics, hiện app và báo "Waiting for your first crash" hoặc đã nhận báo cáo.
+
+Thử gửi lỗi: dùng bản Release (chế độ dev không gửi). Thêm tạm một nút gọi `crash(getCrashlytics())` (import từ `@react-native-firebase/crashlytics`), bấm cho app sập, mở lại app rồi đợi vài phút.
+
+Giới hạn: lỗi JS hiện vị trí trong file bundle (Re.Pack chưa có source map tải lên Crashlytics), nên dùng thuộc tính `miniApp` để lọc theo mini app. Host chưa biết version của mini app đang nạp nên chưa gắn version vào báo cáo (xem "Câu hỏi còn mở").
+
 ## Luồng chạy từ host sang mini app
 
 **Giai đoạn 1: lúc khởi động (chưa bấm gì)**
@@ -502,7 +530,7 @@ Quy ước bắt buộc:
 
 - Tên phải khớp xuyên suốt: name trong rspack.config.mjs của mini app = khóa trong REMOTES của host = '<tên>/App' trong remotes.d.ts = khóa MiniAppKey.
 - Mọi số cổng (8081, 9001, 9002) và tên container phải đối chiếu rspack.config.mjs của host và của mini app.
-- Thêm bước setup thì đặt đúng phần A-E và có dòng "Xong khi".
+- Thêm bước setup thì đặt đúng phần A-F và có dòng "Xong khi".
 - Đổi danh sách thư viện dùng chung chỉ sửa federation.shared trong package.json của host (và bản sao ở work, sale); không gõ cứng danh sách trong rspack.config.mjs.
 - Cách phát hành (web phân phối, build apk/aab/ipa) chỉ ghi ở skill `release-deploy`; ở đây chỉ trỏ tới. Đổi `src/app/deploy.ts` hoặc `remotes.ts` thì sửa đoạn "Bản build phát hành" ở mục Luồng chạy.
 - Cây thư mục phải khớp thực tế (dùng ls). packages/shared chưa có thì không vẽ vào.

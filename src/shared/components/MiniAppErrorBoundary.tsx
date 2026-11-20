@@ -1,8 +1,10 @@
 import React from 'react';
+import {reportMiniAppError} from '../monitoring/crashlytics';
 import MiniAppErrorView from './MiniAppErrorView';
 
 type Props = {
   name: string;
+  app: string; // khóa mini app (work, sale), dùng để gắn vào báo cáo lỗi
   onClose: () => void;
   children: React.ReactNode;
 };
@@ -14,6 +16,10 @@ export default class MiniAppErrorBoundary extends React.Component<Props, State> 
 
   static getDerivedStateFromError(error: Error): State {
     return {error};
+  }
+
+  componentDidCatch(error: Error) {
+    reportMiniAppError(error, this.props.app);
   }
 
   render() {

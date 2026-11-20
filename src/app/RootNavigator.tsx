@@ -15,6 +15,7 @@ import MiniAppErrorBoundary from '../shared/components/MiniAppErrorBoundary';
 import MiniAppErrorView from '../shared/components/MiniAppErrorView';
 import MiniAppLoading from '../shared/components/MiniAppLoading';
 import PlaceholderScreen from '../shared/components/PlaceholderScreen';
+import {reportMiniAppError} from '../shared/monitoring/crashlytics';
 import {colors, spacing} from '../shared/theme';
 import BottomTabBar from './BottomTabBar';
 import {loadMiniApp, MiniAppProps} from './remotes';
@@ -119,10 +120,10 @@ function MiniAppHost({item, onClose, topInset, bottomInset}: MiniAppHostProps) {
     const minWait = new Promise<void>(resolve => setTimeout(resolve, MIN_LOADING_MS));
     const result = loadMiniApp(item.app).then(
       (Component): LoadState => ({status: 'ready', Component}),
-      (e): LoadState => ({
-        status: 'error',
-        message: e instanceof Error ? e.message : 'Lỗi không xác định',
-      }),
+      (e): LoadState => {
+        reportMiniAppError(e, item.app);
+        return {status: 'error', message: e instanceof Error ? e.message : 'Lỗi không xác định'};
+      },
     );
 
     Promise.all([result, minWait]).then(([next]) => {
@@ -155,7 +156,7 @@ function MiniAppHost({item, onClose, topInset, bottomInset}: MiniAppHostProps) {
         />
       )}
       {state.status === 'ready' && (
-        <MiniAppErrorBoundary name={name} onClose={onClose}>
+        <MiniAppErrorBoundary name={name} app={item.app} onClose={onClose}>
           <state.Component initialRoute={item.screen} />
         </MiniAppErrorBoundary>
       )}

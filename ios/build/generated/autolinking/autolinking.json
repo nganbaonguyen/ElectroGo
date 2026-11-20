@@ -3,6 +3,46 @@
   "reactNativePath": "/Users/ngannguyenbao/ElectroGo/node_modules/react-native",
   "reactNativeVersion": "0.88",
   "dependencies": {
+    "@react-native-firebase/app": {
+      "root": "/Users/ngannguyenbao/ElectroGo/node_modules/@react-native-firebase/app",
+      "name": "@react-native-firebase/app",
+      "platforms": {
+        "ios": null,
+        "android": {
+          "sourceDir": "/Users/ngannguyenbao/ElectroGo/node_modules/@react-native-firebase/app/android",
+          "packageImportPath": "import io.invertase.firebase.app.ReactNativeFirebaseAppPackage;",
+          "packageInstance": "new ReactNativeFirebaseAppPackage()",
+          "buildTypes": [],
+          "libraryName": "RNFBAppTurboModules",
+          "componentDescriptors": [],
+          "cmakeListsPath": "/Users/ngannguyenbao/ElectroGo/node_modules/@react-native-firebase/app/android/src/reactnative/java/io/invertase/firebase/app/generated/jni/CMakeLists.txt",
+          "cxxModuleCMakeListsModuleName": null,
+          "cxxModuleCMakeListsPath": null,
+          "cxxModuleHeaderName": null,
+          "isPureCxxDependency": false
+        }
+      }
+    },
+    "@react-native-firebase/crashlytics": {
+      "root": "/Users/ngannguyenbao/ElectroGo/node_modules/@react-native-firebase/crashlytics",
+      "name": "@react-native-firebase/crashlytics",
+      "platforms": {
+        "ios": null,
+        "android": {
+          "sourceDir": "/Users/ngannguyenbao/ElectroGo/node_modules/@react-native-firebase/crashlytics/android",
+          "packageImportPath": "import io.invertase.firebase.crashlytics.ReactNativeFirebaseCrashlyticsPackage;",
+          "packageInstance": "new ReactNativeFirebaseCrashlyticsPackage()",
+          "buildTypes": [],
+          "libraryName": "RNFBCrashlyticsTurboModules",
+          "componentDescriptors": [],
+          "cmakeListsPath": "/Users/ngannguyenbao/ElectroGo/node_modules/@react-native-firebase/crashlytics/android/src/main/java/io/invertase/firebase/crashlytics/generated/jni/CMakeLists.txt",
+          "cxxModuleCMakeListsModuleName": null,
+          "cxxModuleCMakeListsPath": null,
+          "cxxModuleHeaderName": null,
+          "isPureCxxDependency": false
+        }
+      }
+    },
     "@react-native-vector-icons/ionicons": {
       "root": "/Users/ngannguyenbao/ElectroGo/node_modules/@react-native-vector-icons/ionicons",
       "name": "@react-native-vector-icons/ionicons",

@@ -9,7 +9,7 @@ Mỗi skill nằm trong một thư mục riêng và file bên trong luôn tên `
 | Skill (tên thư mục) | Gọi bằng            | Dùng khi                     | Việc chính                    |
 +=====================+=====================+==============================+===============================+
 | electrogo-superapp  | /electrogo-superapp | Cần hiểu kiến trúc, dựng lại | Host và mini app là gì, setup |
-|                     |                     | super app từ đầu, quyết định | từ đầu (phần A-E), luồng nạp  |
+|                     |                     | super app từ đầu, quyết định | từ đầu (phần A-F), luồng nạp  |
 |                     |                     | đặt code ở đâu               | mini app, quy tắc dependency  |
 +---------------------+---------------------+------------------------------+-------------------------------+
 | add-mini-app        | /add-mini-app       | Muốn thêm một mini app mới   | Tạo repo, dựng khung, gắn     |
