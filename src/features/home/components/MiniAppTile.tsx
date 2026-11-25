@@ -2,22 +2,28 @@ import React from 'react';
 import {Pressable, StyleSheet, Text, View} from 'react-native';
 import {Ionicons} from '@react-native-vector-icons/ionicons/static';
 import {colors, radius, spacing, typography} from '../../../shared/theme';
-import {MiniAppItem} from '../types';
+import {HomeItem, isMiniApp} from '../types';
 
 type Props = {
-  item: MiniAppItem;
-  onPress: (item: MiniAppItem) => void;
+  item: HomeItem;
+  onPress: (item: HomeItem) => void;
+  accent?: string; // màu biểu tượng (theo nhóm menu)
+  accentBg?: string; // màu nền ô biểu tượng
 };
 
-export default function MiniAppTile({item, onPress}: Props) {
+export default function MiniAppTile({item, onPress, accent = colors.primaryLight, accentBg = colors.iconTile}: Props) {
+  const comingSoon = !isMiniApp(item);
+
   return (
     <Pressable
       onPress={() => onPress(item)}
       accessibilityRole="button"
-      accessibilityLabel={item.label}
+      accessibilityLabel={comingSoon ? `${item.label}, sắp ra mắt` : item.label}
       style={({pressed}) => [styles.card, pressed && styles.pressed]}>
-      <View style={styles.iconBox}>
-        <Ionicons name={item.icon} size={28} color={colors.primaryLight} />
+      <View style={[styles.iconBox, {backgroundColor: accentBg}, comingSoon && styles.iconBoxSoon]}>
+        <Ionicons name={item.icon} size={28} color={accent} />
+        {/* Chấm cam: ô này chưa có mini app, bấm vào chỉ báo "sắp ra mắt" */}
+        {comingSoon && <View style={styles.soonDot} />}
       </View>
       <Text style={styles.label} numberOfLines={1}>
         {item.label}
@@ -32,10 +38,19 @@ const styles = StyleSheet.create({
   iconBox: {
     width: 56,
     height: 56,
-    backgroundColor: colors.iconTile,
     borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  iconBoxSoon: {opacity: 0.55},
+  soonDot: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.accent,
   },
   label: {
     ...typography.caption,

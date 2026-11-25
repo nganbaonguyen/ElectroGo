@@ -79,7 +79,7 @@ ElectroGo/                      host (repo chính)
 │   ├── app/                    RootNavigator.tsx (MiniAppHost), remotes.ts (bảng nạp mini app),
 │   │                           deploy.ts (hỏi web bản LIVE)
 │   ├── types/remotes.d.ts      khai báo kiểu cho module nạp động ('work/App', ...)
-│   ├── features/home/          màn Home (lưới icon), data/miniApps.ts
+│   ├── features/home/          màn Home (thẻ tóm tắt, banner, nhóm menu), data/miniApps.ts, homeContent.ts
 │   └── shared/                 theme, components dùng chung (MiniAppLoading, MiniAppErrorView, ...)
 ├── packages/                   mini app, MỖI CÁI LÀ MỘT GIT SUBMODULE (xem .gitmodules)
 │   ├── electro-go-work/        name "@electrogo/work", cổng dev 9001
@@ -415,14 +415,21 @@ Nâng version mini app (ví dụ sale 0.1.0 lên 0.1.1) không cần làm gì �
 
 ## Trang chủ host: nhiều module, mở thẳng màn hình đích
 
-Trang chủ liệt kê **từng chức năng** của các mini app (8 icon: Chấm công, Lịch làm việc, Nghỉ phép, Phiếu lương, Đơn hàng, Sản phẩm, Khách hàng, Báo cáo). Bấm một icon thì host nạp mini app tương ứng rồi **mở thẳng đúng màn hình đó**.
+Trang chủ kiểu app ngân hàng, từ trên xuống: header xanh (lời chào theo giờ), thẻ tóm tắt nền navy nổi chồng lên header (số lớn có nút ẩn/hiện, mức tăng, biểu đồ cột 7 ngày, 3 chỉ số), hàng 4 thao tác nhanh, banner vuốt ngang, 3 nhóm menu (Nhân sự, Bán hàng, Tiện ích) mỗi nhóm một màu, danh sách tin mới. Các khối hiện dần khi mở màn (`shared/components/FadeInView.tsx`).
 
-- `src/features/home/data/miniApps.ts`: mỗi dòng là một icon, gồm `key` (duy nhất), `app` (`work`/`sale`), `screen` (màn hình mở thẳng), `label`, `icon` (Ionicons).
+Có hai loại ô trong menu:
+
+- Ô có mini app (`MiniAppItem`, 8 ô: Chấm công, Lịch làm việc, Nghỉ phép, Phiếu lương, Đơn hàng, Sản phẩm, Khách hàng, Báo cáo): bấm thì host nạp mini app rồi **mở thẳng đúng màn hình đó**.
+- Ô chưa có mini app (`ComingSoonItem`, có chấm cam nhỏ): bấm chỉ hiện thông báo "Tính năng sắp ra mắt". Khi làm xong thì chuyển thành `MiniAppItem` (thêm `app` và `screen`).
+
+Số liệu thẻ tóm tắt, banner, tin mới là **dữ liệu mẫu** ở `src/features/home/data/homeContent.ts`, chưa nối API.
+
+- `src/features/home/data/miniApps.ts`: `MINI_APPS` mỗi dòng là một ô có mini app, gồm `key` (duy nhất), `app` (`work`/`sale`), `screen` (màn hình mở thẳng), `label`, `icon` (Ionicons). Cùng file có `COMING_SOON` (ô chưa có mini app), `QUICK_ACTIONS` (hàng thao tác nhanh, mỗi nút một màu) và `HOME_SECTIONS` (các nhóm menu, mỗi nhóm có màu `accent`). Một ô chỉ khai báo một lần, các nhóm lấy theo `key` nên gõ sai `key` thì Home báo lỗi ngay.
 - Host truyền `screen` vào mini app qua prop `initialRoute` (`<state.Component initialRoute={item.screen} />`, kiểu `MiniAppProps` trong `src/app/remotes.ts`).
 - Mini app nhận prop ở `app/<Tên>App.tsx` và `MiniNavigator.resolveInitialRoute`: `initialRoute` khớp một `ModuleKey` (`features/hub/data/modules.ts`) thì vào thẳng route đó, không khớp hoặc rỗng thì vào hub. Nên `screen` ở host **phải trùng `ModuleKey`** của mini app.
 - Khi mở thẳng, ngăn xếp màn hình mini app chỉ có một màn, nên không có nút quay lại bên trong; thoát bằng "‹ Trang chủ" của host.
 
-Thêm một chức năng mới lên Trang chủ: làm xong feature trong mini app (xem bên dưới), rồi thêm **một dòng** vào `MINI_APPS` của host với `screen` đúng bằng khóa module mới.
+Thêm một chức năng mới lên Trang chủ: làm xong feature trong mini app (xem bên dưới), rồi thêm **một dòng** vào `MINI_APPS` của host với `screen` đúng bằng khóa module mới, và đưa `key` đó vào nhóm tương ứng trong `HOME_SECTIONS`. Chức năng chưa làm thì thêm vào `COMING_SOON` để vẫn hiện trên Home.
 
 ## Màn hình trung tâm (hub) và các chức năng của mini app
 

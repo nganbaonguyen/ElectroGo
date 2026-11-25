@@ -6,6 +6,23 @@ import IconButton from '../../../shared/components/IconButton';
 import {colors, radius, spacing, typography} from '../../../shared/theme';
 import {CurrentUser} from '../types';
 
+/** Phần header kéo dài xuống dưới để thẻ tóm tắt nổi chồng lên. */
+export const HEADER_OVERLAP = 52;
+
+/** Lời chào theo giờ trong ngày. */
+function greetingFor(hour: number): string {
+  if (hour < 11) {
+    return 'Chào buổi sáng,';
+  }
+  if (hour < 13) {
+    return 'Chào buổi trưa,';
+  }
+  if (hour < 18) {
+    return 'Chào buổi chiều,';
+  }
+  return 'Chào buổi tối,';
+}
+
 type Props = {
   user: CurrentUser;
   onPressAvatar?: () => void;
@@ -44,7 +61,7 @@ export default function HomeHeader({
         </Pressable>
 
         <View style={styles.info}>
-          <Text style={styles.greeting}>Xin chào,</Text>
+          <Text style={styles.greeting}>{greetingFor(new Date().getHours())}</Text>
           <Text style={styles.name} numberOfLines={1}>
             {user.fullName}
           </Text>
@@ -74,7 +91,7 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: colors.primary,
     paddingHorizontal: spacing.xl,
-    paddingBottom: spacing.xxl,
+    paddingBottom: spacing.xxl + HEADER_OVERLAP,
     borderBottomLeftRadius: radius.xl,
     borderBottomRightRadius: radius.xl,
     overflow: 'hidden',
