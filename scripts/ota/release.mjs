@@ -1,6 +1,6 @@
 // Phát bản OTA (JS bundle của app host) cho người dùng đang cài bản app `binaryVersion` trong ota.config.json.
-// Chạy: `pnpm code-push-live` trên nhánh release/v<phiên bản app>
-// (CI tự chạy khi merge develop vào nhánh release: .github/workflows/ota-release.yml).
+// Chạy: `pnpm code-push-live` trên nhánh release/v<phiên bản app>. Không tự chạy khi push;
+// trên GitHub có nút chạy tay dự phòng: .github/workflows/ota-release.yml.
 //
 // Các bước:
 //   0. Chặn nếu không ở nhánh release/v<phiên bản>, hoặc phiên bản trong tên nhánh khác binaryVersion.
@@ -10,7 +10,7 @@
 //   3. Mỗi nền tảng: tạo lịch sử phát hành nếu chưa có, tính số bản OTA kế tiếp, chạy `code-push release`.
 //
 // Biến môi trường:
-//   GITHUB_TOKEN        bắt buộc, quyền ghi Releases (GitHub Actions có sẵn)
+//   GITHUB_TOKEN        bắt buộc, quyền ghi Releases (ở máy: đặt trong scripts/build.local.env; GitHub Actions có sẵn)
 //   DEPLOY_STATIC_URL   bắt buộc (CI: biến repo; máy: scripts/build.local.env)
 //   OTA_MANDATORY=true  bản bắt buộc: app áp dụng ngay thay vì chờ lần mở sau
 //   OTA_ROLLOUT=20      chỉ phát cho 20% người dùng
@@ -85,7 +85,12 @@ if (!process.env.DEPLOY_STATIC_URL || !process.env.DEPLOY_STATIC_URL.startsWith(
   fail('Thiếu DEPLOY_STATIC_URL (https://...github.io/...). CI: Settings > Secrets and variables > Actions > Variables.');
 }
 if (!process.env.GITHUB_TOKEN && !process.env.GH_TOKEN) {
-  fail('Thiếu GITHUB_TOKEN (quyền ghi Releases của ' + config.repo + ').');
+  fail(
+    'Thiếu GITHUB_TOKEN (quyền ghi Releases của ' + config.repo + '). Làm một lần:\n' +
+      '  1. Tạo token: https://github.com/settings/personal-access-tokens/new\n' +
+      '     Repository access: Only select repositories > ' + config.repo.split('/')[1] + '; Permissions > Contents: Read and write\n' +
+      '  2. Thêm dòng GITHUB_TOKEN=<token> vào scripts/build.local.env (file này không lên git).',
+  );
 }
 
 // 3. Phát hành

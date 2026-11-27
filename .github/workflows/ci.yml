@@ -1,5 +1,5 @@
 # CI: kiểm tra mỗi pull request và mỗi lần đẩy code lên nhánh chính.
-# Đỏ thì không nên merge. OTA chạy ở workflow riêng (ota-release.yml) khi merge develop vào nhánh release/v<phiên bản>.
+# Đỏ thì không nên merge. OTA không tự chạy: phát bằng `pnpm code-push-live` trên nhánh release/v<phiên bản> (xem ota-release.yml).
 name: CI
 
 on:

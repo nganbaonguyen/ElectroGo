@@ -1,5 +1,7 @@
-# OTA: merge develop vào nhánh release (release/v<phiên bản app>, ví dụ release/v1.0.0) thì tự build JS bundle
-# của app host và phát cho người dùng đang cài đúng phiên bản app đó (pnpm code-push-live).
+# OTA KHÔNG tự chạy khi push. Phát OTA bằng một trong hai cách:
+#   - Ở máy: đứng ở nhánh release/v<phiên bản app>, chạy `pnpm code-push-live` (cách chính).
+#   - Trên GitHub: Actions > OTA release > Run workflow, chọn nhánh release (dự phòng, không cần token ở máy).
+# Bản OTA nhắm vào người dùng đang cài đúng phiên bản app của nhánh đó.
 #
 # Phiên bản app lấy từ tên nhánh và phải khớp binaryVersion trong ota.config.json (1.0 = 1.0.0), lệch thì dừng
 # để không phát nhầm bản. Bản OTA lưu ở GitHub Releases của repo này (release "ota-live"); app đọc ở đó
@@ -9,17 +11,10 @@
 # https://nganbaonguyen.github.io/electrogo-bundles; muốn đổi thì đặt Variable cùng tên ở
 # Settings > Secrets and variables > Actions > Variables.
 #
-# Chạy tay (Actions > OTA release > Run workflow, chọn nhánh release) để phát bản bắt buộc, phát dần theo %,
-# hoặc một nền tảng.
+# Khi chạy tay có thể chọn: bản bắt buộc, phát dần theo %, hoặc một nền tảng.
 name: OTA release
 
 on:
-  push:
-    branches: ['release/**']
-    paths-ignore:
-      - '**.md'
-      - '.claude/**'
-      - 'packages/**' # mini app phát hành riêng bằng file .tar trên web phân phối
   workflow_dispatch:
     inputs:
       mandatory:

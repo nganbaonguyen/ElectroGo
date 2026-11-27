@@ -6,7 +6,7 @@ import otaConfig from '../../ota.config.json';
 /**
  * Cập nhật OTA cho app host (JS bundle) bằng @bravemobile/react-native-code-push.
  * Bản OTA và lịch sử phát hành nằm trên GitHub Releases của repo (release `ota-<identifier>`),
- * do `pnpm code-push-live` (CI khi merge develop vào nhánh release/v<phiên bản>) đưa lên. Tên file phải khớp code-push.config.js.
+ * do `pnpm code-push-live` (chạy tay trên nhánh release/v<phiên bản>) đưa lên. Tên file phải khớp code-push.config.js.
  *
  * Luồng:
  * - Kiểm tra khi mở app và mỗi lần app quay lại từ nền.
