@@ -5,8 +5,9 @@
 # để không phát nhầm bản. Bản OTA lưu ở GitHub Releases của repo này (release "ota-live"); app đọc ở đó
 # (src/app/ota.tsx).
 #
-# Cần đặt một lần: Settings > Secrets and variables > Actions > Variables > DEPLOY_STATIC_URL
-# (địa chỉ GitHub Pages của bundle mini app, giống DEPLOY_STATIC_URL trong scripts/build.local.env).
+# DEPLOY_STATIC_URL: địa chỉ GitHub Pages của bundle mini app (giống scripts/build.local.env). Mặc định là
+# https://nganbaonguyen.github.io/electrogo-bundles; muốn đổi thì đặt Variable cùng tên ở
+# Settings > Secrets and variables > Actions > Variables.
 #
 # Chạy tay (Actions > OTA release > Run workflow, chọn nhánh release) để phát bản bắt buộc, phát dần theo %,
 # hoặc một nền tảng.
@@ -73,7 +74,7 @@ jobs:
         run: pnpm code-push-live
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DEPLOY_STATIC_URL: ${{ vars.DEPLOY_STATIC_URL }}
+          DEPLOY_STATIC_URL: ${{ vars.DEPLOY_STATIC_URL || 'https://nganbaonguyen.github.io/electrogo-bundles' }}
           DEPLOY_ENV: live
           OTA_BRANCH: ${{ github.ref_name }}
           OTA_MANDATORY: ${{ inputs.mandatory && 'true' || 'false' }}
