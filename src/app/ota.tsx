@@ -175,7 +175,10 @@ export function withOta<P extends object>(App: ComponentType<P>): ComponentType<
     return App;
   }
 
-  CodePush = require('@bravemobile/react-native-code-push').default;
+  // Thư viện xuất kiểu CommonJS (module.exports = CodePush): require trả thẳng hàm, không có .default.
+  // Giữ cả hai cách để không vỡ nếu thư viện đổi sang ES module.
+  const mod = require('@bravemobile/react-native-code-push');
+  CodePush = mod.default ?? mod;
   // MANUAL: thư viện chỉ báo "app chạy ổn" (chống rollback nhầm); việc kiểm tra do sync() ở trên làm để lấy tiến trình
   const Wrapped: ComponentType<P> = CodePush({
     checkFrequency: CodePush.CheckFrequency.MANUAL,
