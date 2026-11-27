@@ -6,7 +6,7 @@ import {Banner, NewsItem, SummaryData} from '../types';
  */
 export const SUMMARY: SummaryData = {
   title: 'Doanh số hôm nay',
-  amount: 12450000,
+  amount: 12999000,
   unit: 'VNĐ',
   note: 'Cập nhật lúc 15:30',
   delta: '+8,2% so với hôm qua',
