@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 import {Ionicons} from '@react-native-vector-icons/ionicons/static';
-import {colors, radius, spacing, typography} from '../../../shared/theme';
+import {colors, GUTTER, radius, spacing, typography} from '../../../shared/theme';
 import {Banner} from '../types';
 
 type Props = {banners: Banner[]};
@@ -19,7 +19,7 @@ const GAP = spacing.md;
 /** Dải banner chạy ngang, vuốt để chuyển, có chấm báo trang. */
 export default function PromoBanner({banners}: Props) {
   const {width} = useWindowDimensions();
-  const cardWidth = width - spacing.xl * 2;
+  const cardWidth = width - GUTTER * 2;
   const [page, setPage] = useState(0);
 
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -67,7 +67,7 @@ export default function PromoBanner({banners}: Props) {
 }
 
 const styles = StyleSheet.create({
-  row: {paddingHorizontal: spacing.xl, gap: GAP},
+  row: {paddingHorizontal: GUTTER, gap: GAP},
   card: {
     height: 128,
     borderRadius: radius.lg,

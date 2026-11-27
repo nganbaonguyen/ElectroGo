@@ -2,7 +2,7 @@ import React from 'react';
 import {Alert, ScrollView, StyleSheet, View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import FadeInView from '../../../shared/components/FadeInView';
-import {colors, spacing} from '../../../shared/theme';
+import {colors, GUTTER, spacing} from '../../../shared/theme';
 import HomeHeader, {HEADER_OVERLAP} from '../components/HomeHeader';
 import MenuSection from '../components/MenuSection';
 import NewsList from '../components/NewsList';
@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
   content: {paddingBottom: spacing.xxl},
   overscroll: {position: 'absolute', top: -1000, left: 0, right: 0, height: 1000, backgroundColor: colors.primary},
   statusStrip: {position: 'absolute', top: 0, left: 0, right: 0, backgroundColor: colors.primary},
-  block: {paddingHorizontal: spacing.xl, marginBottom: spacing.lg},
+  block: {paddingHorizontal: GUTTER, marginBottom: spacing.lg},
   floating: {marginTop: -HEADER_OVERLAP},
   bannerBlock: {marginBottom: spacing.lg},
 });

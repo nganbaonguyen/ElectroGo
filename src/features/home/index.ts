@@ -2,4 +2,5 @@
 export {default as HomeScreen} from './screens/HomeScreen';
 export type {HomeItem, MiniAppItem, MiniAppKey} from './types';
 export {MOCK_USER} from './data/currentUser';
+export {MINI_APP_NAMES} from './data/miniApps';
 export type {CurrentUser} from './types';

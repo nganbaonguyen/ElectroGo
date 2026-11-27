@@ -1,4 +1,10 @@
-import {ComingSoonItem, HomeItem, HomeSection, MiniAppItem, QuickAction} from '../types';
+import {ComingSoonItem, HomeItem, HomeSection, MiniAppItem, MiniAppKey, QuickAction} from '../types';
+
+/** Tên hiển thị của từng mini app (thanh trên cùng khi mở mini app). */
+export const MINI_APP_NAMES: Record<MiniAppKey, string> = {
+  work: 'Nhân sự',
+  sale: 'Bán hàng',
+};
 
 /**
  * Các ô có mini app phía sau. Mỗi dòng = một ô trên Home.

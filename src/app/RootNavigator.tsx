@@ -1,22 +1,16 @@
 import React, {ComponentType, useCallback, useEffect, useState} from 'react';
-import {
-  Alert,
-  Pressable,
-  StatusBar,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import {Alert, StatusBar, StyleSheet, View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {HomeScreen, MiniAppItem, MOCK_USER} from '../features/home';
+import {HomeScreen, MINI_APP_NAMES, MiniAppItem, MOCK_USER} from '../features/home';
 import {ProfileScreen} from '../features/profile';
 import {SplashScreen} from '../features/splash';
 import MiniAppErrorBoundary from '../shared/components/MiniAppErrorBoundary';
 import MiniAppErrorView from '../shared/components/MiniAppErrorView';
+import MiniAppHeader from '../shared/components/MiniAppHeader';
 import MiniAppLoading from '../shared/components/MiniAppLoading';
 import PlaceholderScreen from '../shared/components/PlaceholderScreen';
 import {reportMiniAppError} from '../shared/monitoring/crashlytics';
-import {colors, spacing} from '../shared/theme';
+import {colors} from '../shared/theme';
 import BottomTabBar from './BottomTabBar';
 import {loadMiniApp, MiniAppProps} from './remotes';
 import {TABS, TabKey} from './tabs';
@@ -87,12 +81,11 @@ const styles = StyleSheet.create({
   root: {flex: 1, backgroundColor: colors.background},
   content: {flex: 1},
   miniApp: {flex: 1, backgroundColor: colors.surface},
-  back: {paddingHorizontal: spacing.xl, paddingVertical: spacing.md},
-  backText: {fontSize: 16, color: colors.primaryLight},
+  miniAppBody: {flex: 1},
 });
 
-/** Thời gian tối thiểu hiện màn loading khi tải/thử lại mini app. */
-const MIN_LOADING_MS = 900;
+/** Thời gian tối thiểu hiện màn loading khi tải/thử lại mini app (chưa tính ~0,7 giây hiệu ứng kết thúc). */
+const MIN_LOADING_MS = 1200;
 
 type MiniAppHostProps = {item: MiniAppItem; onClose: () => void; topInset: number; bottomInset: number};
 
@@ -103,19 +96,23 @@ type LoadState =
 
 /**
  * Khung chứa mini app nạp động. Trạng thái tải do chính component này quản lý:
- * loading (logo) -> ready (hiện mini app) hoặc error (màn trắng có nút Thử lại / Đóng).
+ * loading -> ready (hiện mini app) hoặc error (màn trắng có nút Thử lại / Đóng).
+ * Màn loading phủ lên trên cùng; khi có kết quả nó chạy hiệu ứng kết thúc rồi mờ dần để lộ nội dung phía dưới.
  * Không dùng lazy/Suspense để lỗi tải không bị ném trong lúc render (tránh màn đỏ ở chế độ dev).
  */
 function MiniAppHost({item, onClose, topInset, bottomInset}: MiniAppHostProps) {
   const [attempt, setAttempt] = useState(0);
   const [state, setState] = useState<LoadState>({status: 'loading'});
+  const [overlay, setOverlay] = useState(true); // màn loading còn hiện (kể cả lúc đang mờ dần)
+  const hideOverlay = useCallback(() => setOverlay(false), []);
   const name = item.label; // hiển thị tên module đang mở, ví dụ "Phiếu lương"
 
   useEffect(() => {
     let cancelled = false;
     setState({status: 'loading'});
+    setOverlay(true);
 
-    // Giữ màn loading (logo) tối thiểu MIN_LOADING_MS, kể cả khi kết quả (nhất là lỗi) về gần như tức thì,
+    // Giữ màn loading tối thiểu MIN_LOADING_MS, kể cả khi kết quả (nhất là lỗi) về gần như tức thì,
     // để người dùng thấy rõ app đang thử lại thay vì thấy màn hình chớp.
     const minWait = new Promise<void>(resolve => setTimeout(resolve, MIN_LOADING_MS));
     const result = loadMiniApp(item.app).then(
@@ -136,29 +133,42 @@ function MiniAppHost({item, onClose, topInset, bottomInset}: MiniAppHostProps) {
     };
   }, [item.app, attempt]);
 
+  // Lớp ngoài không padding để màn loading (absolute) phủ kín cả vùng tai thỏ và thanh điều hướng.
   // paddingBottom: chừa chỗ cho thanh điều hướng Android ở đáy, không có thì phần sát đáy của mini app bị nó che mất
   return (
-    <View style={[styles.miniApp, {paddingTop: topInset, paddingBottom: bottomInset}]}>
-      <StatusBar barStyle="dark-content" />
-      <Pressable style={styles.back} onPress={onClose}>
-        <Text style={styles.backText}>‹ Trang chủ</Text>
-      </Pressable>
-      {state.status === 'loading' && <MiniAppLoading name={name} />}
-      {state.status === 'error' && (
-        <MiniAppErrorView
+    <View style={styles.miniApp}>
+      <StatusBar barStyle={overlay ? 'light-content' : 'dark-content'} />
+      <View style={[styles.miniAppBody, {paddingTop: topInset, paddingBottom: bottomInset}]}>
+        <MiniAppHeader title={MINI_APP_NAMES[item.app]} onBack={onClose} />
+        {state.status === 'error' && (
+          <MiniAppErrorView
+            name={name}
+            message={state.message}
+            onRetry={() => {
+              setState({status: 'loading'}); // hiện loading ngay khi bấm, không chờ effect chạy
+              setOverlay(true);
+              setAttempt(a => a + 1);
+            }}
+            onClose={onClose}
+          />
+        )}
+        {state.status === 'ready' && (
+          <MiniAppErrorBoundary name={name} app={item.app} onClose={onClose}>
+            <state.Component initialRoute={item.screen} />
+          </MiniAppErrorBoundary>
+        )}
+      </View>
+      {overlay && (
+        <MiniAppLoading
+          key={attempt} // thử lại thì chạy lại hiệu ứng từ đầu
           name={name}
-          message={state.message}
-          onRetry={() => {
-            setState({status: 'loading'}); // hiện loading ngay khi bấm, không chờ effect chạy
-            setAttempt(a => a + 1);
-          }}
+          icon={item.icon}
+          done={state.status !== 'loading'}
+          onHidden={hideOverlay}
           onClose={onClose}
+          topInset={topInset}
+          bottomInset={bottomInset}
         />
-      )}
-      {state.status === 'ready' && (
-        <MiniAppErrorBoundary name={name} app={item.app} onClose={onClose}>
-          <state.Component initialRoute={item.screen} />
-        </MiniAppErrorBoundary>
       )}
     </View>
   );
