@@ -134,8 +134,9 @@ for (const platform of platforms) {
     '--platform', platform,
     '--identifier', identifier,
     '--entry-file', 'index.js',
-    // CLI xóa sạch thư mục output trước khi đóng gói; mặc định là build/ (mất cả build/release chứa apk/ipa)
-    '--output-path', 'build/codepush',
+    // CLI xóa sạch thư mục output trước khi đóng gói; mặc định là build/ (mất cả build/release chứa apk/ipa).
+    // Mỗi lần chạy, mỗi nền tảng một thư mục riêng: hai lần chạy cùng lúc không xóa file của nhau.
+    '--output-path', `build/codepush/${process.pid}-${platform}`,
     ...extra,
   ]);
 }
