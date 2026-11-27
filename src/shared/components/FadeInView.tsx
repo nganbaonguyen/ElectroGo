@@ -1,5 +1,5 @@
 import React, {useEffect, useRef} from 'react';
-import {Animated, StyleProp, ViewStyle} from 'react-native';
+import {Animated, Platform, StyleProp, View, ViewStyle} from 'react-native';
 
 type Props = {
   /** Thứ tự của khối trong trang, khối sau hiện trễ hơn khối trước một chút. */
@@ -11,8 +11,22 @@ type Props = {
 const STEP_MS = 70;
 const DURATION_MS = 420;
 
-/** Hiện dần và trượt nhẹ từ dưới lên khi mở màn hình. Các khối hiện lần lượt tạo cảm giác mượt. */
-export default function FadeInView({index = 0, style, children}: Props) {
+// Android vẽ sai bóng đổ (elevation) của thẻ con khi lớp cha đang đổi opacity: lộ viền tối/nâu quanh thẻ
+// trong lúc hiện dần. Nên trên Android hiện thẳng, không animation.
+const ANIMATE = Platform.OS !== 'android';
+
+/**
+ * Hiện dần và trượt nhẹ từ dưới lên khi mở màn hình (chỉ iOS). Các khối hiện lần lượt tạo cảm giác mượt.
+ * Android: hiện ngay, không hiệu ứng (xem ANIMATE).
+ */
+export default function FadeInView(props: Props) {
+  if (!ANIMATE) {
+    return <View style={props.style}>{props.children}</View>;
+  }
+  return <AnimatedFadeIn {...props} />;
+}
+
+function AnimatedFadeIn({index = 0, style, children}: Props) {
   const progress = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
