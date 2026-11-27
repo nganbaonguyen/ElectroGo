@@ -1,3 +1,4 @@
+import {TurboModuleRegistry} from 'react-native';
 import type {Crashlytics} from '@react-native-firebase/crashlytics';
 
 type CrashlyticsModule = typeof import('@react-native-firebase/crashlytics');
@@ -8,6 +9,11 @@ type CrashlyticsModule = typeof import('@react-native-firebase/crashlytics');
  * Dùng require trong try vì thiếu module native thì ngay lúc import đã ném lỗi.
  */
 function safely(action: (api: CrashlyticsModule, crashlytics: Crashlytics) => void) {
+  // Bản app cài trên máy chưa có phần native Firebase (build cũ): bỏ qua luôn, không require.
+  // Nếu vẫn require thì lỗi "NativeRNFBTurboApp is not registered" hiện màn đỏ ở chế độ dev dù đã bọc try.
+  if (TurboModuleRegistry.get('NativeRNFBTurboApp') == null) {
+    return;
+  }
   try {
     const api = require('@react-native-firebase/crashlytics') as CrashlyticsModule;
     action(api, api.getCrashlytics());
