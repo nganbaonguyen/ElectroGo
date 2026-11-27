@@ -91,7 +91,9 @@ if (!process.env.GITHUB_TOKEN && !process.env.GH_TOKEN) {
 // 3. Phát hành
 const storage = require(path.join(ROOT, 'code-push.config.js'));
 const cli = path.join(ROOT, 'node_modules/.bin/code-push');
-const run = args => execFileSync(cli, args, {cwd: ROOT, stdio: 'inherit', env: process.env});
+// --config: CLI mặc định tìm code-push.config.ts, file cấu hình ở đây là .js
+const run = ([command, ...args]) =>
+  execFileSync(cli, [command, '--config', 'code-push.config.js', ...args], {cwd: ROOT, stdio: 'inherit', env: process.env});
 
 const histories = {};
 for (const platform of platforms) {
