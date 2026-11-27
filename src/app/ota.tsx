@@ -10,9 +10,9 @@ import otaConfig from '../../ota.config.json';
  *
  * Luồng:
  * - Kiểm tra khi mở app và mỗi lần app quay lại từ nền.
- * - Bản thường: tải ngầm, thanh cập nhật trên Home (OtaUpdateBanner) hiện tiến trình rồi nút "Cập nhật".
- *   Người dùng không bấm thì bản mới tự áp dụng khi app ở nền ít nhất 5 phút rồi mở lại.
- * - Bản bắt buộc (--mandatory): cài xong khởi động lại ngay.
+ * - Tải ngầm, thanh cập nhật trên Home (OtaUpdateBanner) hiện tiến trình; tải xong tự cài và khởi động lại
+ *   ngay, người dùng không phải bấm gì. Việc kiểm tra chỉ chạy lúc mở app / quay lại app nên thường rơi vào
+ *   vài giây đầu sau khi mở.
  * - Bản mới làm app sập trước khi chạy xong thì lần mở sau tự quay về bản trước (rollback của CodePush).
  */
 
@@ -78,9 +78,9 @@ function sync() {
   const S = CodePush.SyncStatus;
   CodePush.sync(
     {
-      installMode: CodePush.InstallMode.ON_NEXT_RESUME,
+      // Tải xong là cài và khởi động lại luôn (cả bản thường lẫn bản bắt buộc)
+      installMode: CodePush.InstallMode.IMMEDIATE,
       mandatoryInstallMode: CodePush.InstallMode.IMMEDIATE,
-      minimumBackgroundDuration: 5 * 60,
     },
     (status: number) => {
       switch (status) {
@@ -90,8 +90,11 @@ function sync() {
         case S.INSTALLING_UPDATE:
           setState({phase: 'installing', progress: 1});
           break;
-        case S.UPDATE_INSTALLED: // cũng báo khi bản đã tải từ trước vẫn đang chờ áp dụng
+        case S.UPDATE_INSTALLED:
+          // Bản mới tải: thư viện tự khởi động lại (IMMEDIATE). Bản tải từ trước còn đang chờ áp dụng
+          // (app cũ cài theo kiểu "lần mở sau"): tự khởi động lại sau một nhịp để người dùng kịp thấy thông báo.
           setState({phase: 'ready', progress: 1});
+          setTimeout(applyOtaUpdate, 1200);
           break;
         case S.UP_TO_DATE:
         case S.UPDATE_IGNORED:

@@ -8,14 +8,13 @@ const NAVY = '#0B1F4D';
 
 const COPY: Record<Exclude<OtaPhase, 'idle'>, {title: string; icon: 'cloud-download-outline' | 'sync-outline' | 'sparkles'}> = {
   downloading: {title: 'Đang tải bản cập nhật', icon: 'cloud-download-outline'},
-  installing: {title: 'Đang chuẩn bị bản cập nhật', icon: 'sync-outline'},
-  ready: {title: 'Đã có phiên bản mới', icon: 'sparkles'},
+  installing: {title: 'Đang cập nhật', icon: 'sync-outline'},
+  ready: {title: 'Đã cập nhật xong', icon: 'sparkles'},
 };
 
 /**
- * Thanh cập nhật OTA nổi ở đáy Home (trên thanh tab): hiện khi đang tải bản cập nhật và khi tải xong.
- * Tải xong có nút "Cập nhật" (khởi động lại để áp dụng ngay) và nút đóng; đóng thì bản mới vẫn tự
- * áp dụng ở lần mở app sau (xem src/app/ota.tsx).
+ * Thanh cập nhật OTA nổi ở đáy Home (trên thanh tab): hiện tiến trình tải, rồi báo app tự khởi động lại
+ * (src/app/ota.tsx cài ngay khi tải xong). Nút "Cập nhật" chỉ còn là dự phòng nếu việc khởi động lại bị chặn.
  */
 export default function OtaUpdateBanner() {
   const {phase, progress} = useOtaState();
@@ -49,10 +48,10 @@ export default function OtaUpdateBanner() {
   const copy = COPY[phase];
   const subtitle =
     phase === 'downloading'
-      ? `${Math.round(progress * 100)}% · Bạn vẫn dùng app bình thường`
+      ? `${Math.round(progress * 100)}% · App sẽ tự khởi động lại khi xong`
       : phase === 'installing'
-        ? 'Sắp xong...'
-        : 'Khởi động lại để dùng ngay';
+        ? 'App sẽ tự khởi động lại'
+        : 'Đang khởi động lại...';
 
   return (
     <Animated.View
