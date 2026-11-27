@@ -127,6 +127,8 @@ for (const platform of platforms) {
     '--platform', platform,
     '--identifier', identifier,
     '--entry-file', 'index.js',
+    // CLI xóa sạch thư mục output trước khi đóng gói; mặc định là build/ (mất cả build/release chứa apk/ipa)
+    '--output-path', 'build/codepush',
     ...extra,
   ]);
 }
