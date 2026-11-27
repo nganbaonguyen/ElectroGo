@@ -21,3 +21,11 @@ buildscript {
 }
 
 apply plugin: "com.facebook.react.rootproject"
+
+// Thư viện có code C++ mà không ghi ndkVersion (vd. @bravemobile/react-native-code-push) sẽ dùng NDK mặc định
+// của Android Gradle Plugin và tự tải thêm ~1 GB. Ép mọi thư viện dùng chung NDK của dự án (ndkVersion ở trên).
+subprojects { subproject ->
+    subproject.plugins.withId("com.android.library") {
+        subproject.android.ndkVersion = rootProject.ext.ndkVersion
+    }
+}

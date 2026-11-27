@@ -1,0 +1,52 @@
+# CI: kiểm tra mỗi pull request và mỗi lần đẩy code lên nhánh chính.
+# Đỏ thì không nên merge. OTA chạy ở workflow riêng (ota-release.yml) khi merge develop vào nhánh release/v<phiên bản>.
+name: CI
+
+on:
+  pull_request:
+    branches: [develop, 'release/**']
+  push:
+    branches: [develop, 'release/**']
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Typecheck và test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive # mini app work/sale là submodule, tsc kiểm tra cả hai
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Test
+        run: pnpm test --ci
+
+      - name: Phần native so với bản app đang phát hành
+        # Không làm đỏ CI: chỉ báo trước để biết PR này khi lên nhánh release sẽ KHÔNG phát OTA được.
+        run: |
+          current=$(node scripts/ota/native-fingerprint.mjs)
+          recorded=$(node -p "require('./ota.config.json').nativeFingerprint || ''")
+          if [ "$current" != "$recorded" ]; then
+            echo "::warning title=Đổi phần native::PR này đổi ios/, android/ hoặc dependencies. Khi lên nhánh release sẽ không phát OTA được; cần build app mới (xem scripts/ota/release.mjs)."
+          fi

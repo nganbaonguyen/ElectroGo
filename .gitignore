@@ -33,3 +33,4 @@ scripts/build.local.env
 # Riêng từng máy (Android Studio)
 android/local.properties
 android/.idea/
+codepush-release-history/

@@ -12,6 +12,8 @@ import PlaceholderScreen from '../shared/components/PlaceholderScreen';
 import {reportMiniAppError} from '../shared/monitoring/crashlytics';
 import {colors} from '../shared/theme';
 import BottomTabBar from './BottomTabBar';
+import OtaUpdateBanner from './OtaUpdateBanner';
+import {useAppVersionText} from './ota';
 import {loadMiniApp, MiniAppProps} from './remotes';
 import {TABS, TabKey} from './tabs';
 
@@ -29,6 +31,7 @@ export default function RootNavigator() {
   const [showProfile, setShowProfile] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
   const hideSplash = useCallback(() => setShowSplash(false), []);
+  const versionText = useAppVersionText();
 
   const onPressScan = () => Alert.alert('Quét mã', 'Tính năng đang được phát triển');
 
@@ -46,7 +49,9 @@ export default function RootNavigator() {
 
   // Hồ sơ cá nhân chiếm toàn màn hình, mở khi bấm ảnh đại diện ở Home.
   if (showProfile) {
-    return <ProfileScreen user={MOCK_USER} onClose={() => setShowProfile(false)} />;
+    return (
+      <ProfileScreen user={MOCK_USER} onClose={() => setShowProfile(false)} versionText={versionText} />
+    );
   }
 
   const current = TABS.find(t => t.key === tab)!;
@@ -64,6 +69,8 @@ export default function RootNavigator() {
         ) : (
           <PlaceholderScreen title={current.label} icon={current.iconActive} />
         )}
+        {/* Thanh cập nhật OTA nổi ở đáy Home, ngay trên thanh tab */}
+        {tab === 'home' && <OtaUpdateBanner />}
       </View>
       <BottomTabBar
         active={tab}

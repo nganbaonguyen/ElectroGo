@@ -26,6 +26,13 @@ PODS:
     - ReactNativeDependencies
     - SwiftyRSA (~> 1.7)
     - Yoga
+  - CodePush (13.6.0):
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - ReactCodegen
+    - ReactCommon/turbomodule/core
+    - SSZipArchive (~> 2.5.5)
   - DoubleConversion (1.1.6):
     - ReactNativeDependencies
   - fast_float (8.0.0):
@@ -1951,6 +1958,7 @@ PODS:
     - Yoga
   - SocketRocket (0.7.1):
     - ReactNativeDependencies
+  - SSZipArchive (2.5.5)
   - SwiftyRSA (1.7.0):
     - SwiftyRSA/ObjC (= 1.7.0)
   - SwiftyRSA/ObjC (1.7.0)
@@ -1960,6 +1968,7 @@ PODS:
 DEPENDENCIES:
   - boost (from `build/rndeps-facades/boost`)
   - "callstack-repack (from `../node_modules/@callstack/repack`)"
+  - "CodePush (from `../node_modules/@bravemobile/react-native-code-push`)"
   - DoubleConversion (from `build/rndeps-facades/DoubleConversion`)
   - fast_float (from `build/rndeps-facades/fast_float`)
   - FBLazyVector (from `build/rncore-facades/FBLazyVector`)
@@ -2067,6 +2076,7 @@ SPEC REPOS:
     - nanopb
     - PromisesObjC
     - PromisesSwift
+    - SSZipArchive
     - SwiftyRSA
 
 EXTERNAL SOURCES:
@@ -2074,6 +2084,8 @@ EXTERNAL SOURCES:
     :path: build/rndeps-facades/boost
   callstack-repack:
     :path: "../node_modules/@callstack/repack"
+  CodePush:
+    :path: "../node_modules/@bravemobile/react-native-code-push"
   DoubleConversion:
     :path: build/rndeps-facades/DoubleConversion
   fast_float:
@@ -2257,6 +2269,7 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   boost: 2a9d6e1d9873337543f08d9dbc007b288f4e113b
   callstack-repack: 482cf3c2be788f3ba4c63858e369d927edb9b540
+  CodePush: 143af2f0bbe90dec2dd7f98274a30c0a8501e112
   DoubleConversion: e85e4faac763226bfd1cc4c6a98d8355149b27a5
   fast_float: 908e5ee35999f3d91af4b962ac951acac591866c
   FBLazyVector: 67f73ac20aa6866d00d4319696528211c75a37f8
@@ -2359,9 +2372,10 @@ SPEC CHECKSUMS:
   RNFBApp: 916ccb398914337112187f96783594288737b978
   RNFBCrashlytics: 9dcaafec3b4a3b2089b3b403c45d879a264cd102
   SocketRocket: d57b1af80c029e12a75cd9b218287c67381e4593
+  SSZipArchive: c69881e8ac5521f0e622291387add5f60f30f3c4
   SwiftyRSA: 8c6dd1ea7db1b8dc4fb517a202f88bb1354bc2c6
   Yoga: 58b502c52b14ad3c4468805d461fc37d275c2a42
 
-PODFILE CHECKSUM: 3ce7d438496ac6f795e9b984eaa51b15bd21db78
+PODFILE CHECKSUM: c9ee3bffa82f54692e390bef5d7edcc869cae12b
 
 COCOAPODS: 1.16.2

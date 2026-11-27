@@ -20,7 +20,8 @@
 
   dispatch_once(&onceToken, ^{
     NSDictionary<NSString *, NSString *> * moduleMapping = @{
-      		@"NativeRNFBTurboApp": @"RNFBAppModule", // @react-native-firebase/app
+      		@"CodePush": @"CodePush", // @bravemobile/react-native-code-push
+		@"NativeRNFBTurboApp": @"RNFBAppModule", // @react-native-firebase/app
 		@"NativeRNFBTurboUtils": @"RNFBUtilsModule", // @react-native-firebase/app
 		@"NativeRNFBTurboCrashlytics": @"RNFBCrashlyticsModule", // @react-native-firebase/crashlytics
     };

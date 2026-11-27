@@ -13,7 +13,10 @@
     "solo:work": "pnpm --dir packages/electro-go-work solo",
     "solo:sale": "pnpm --dir packages/electro-go-sale solo",
     "build:android": "bash scripts/build-android.sh",
-    "build:ios": "bash scripts/build-ios.sh"
+    "build:ios": "bash scripts/build-ios.sh",
+    "typecheck": "tsc --noEmit",
+    "code-push-live": "node scripts/ota/release.mjs",
+    "ota:fingerprint": "node scripts/ota/native-fingerprint.mjs --write"
   },
   "federation": {
     "shared": [
@@ -23,6 +26,7 @@
     ]
   },
   "dependencies": {
+    "@bravemobile/react-native-code-push": "13.6.0",
     "@module-federation/enhanced": "2.9.3",
     "@react-native-firebase/app": "26.4.2",
     "@react-native-firebase/crashlytics": "26.4.2",

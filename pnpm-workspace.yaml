@@ -1,2 +1,8 @@
 packages:
   - 'packages/*'
+
+# Script cài đặt của các gói này không cần cho app (chỉ kiểm tra phiên bản / thông báo).
+# Khai báo rõ để pnpm không dừng với lỗi ERR_PNPM_IGNORED_BUILDS (cả trên CI).
+allowBuilds:
+  '@firebase/util': false
+  protobufjs: false

@@ -5,7 +5,8 @@ require Pod::Executable.execute_command('node', ['-p',
     {paths: [process.argv[1]]},
   )', __dir__]).strip
 
-platform :ios, min_ios_version_supported
+# CodePush (OTA, src/app/ota.tsx) cần iOS 15.5 trở lên; RN mặc định 15.1
+platform :ios, '15.5'
 # Firebase (Crashlytics): dùng CocoaPods thay vì Swift Package Manager để không phải bật dynamic frameworks
 # (dynamic frameworks chưa build được với React Native 0.88.1).
 $RNFirebaseDisableSPM = true

@@ -3,6 +3,31 @@
   "reactNativePath": "/Users/ngannguyenbao/ElectroGo/node_modules/react-native",
   "reactNativeVersion": "0.88",
   "dependencies": {
+    "@bravemobile/react-native-code-push": {
+      "root": "/Users/ngannguyenbao/ElectroGo/node_modules/@bravemobile/react-native-code-push",
+      "name": "@bravemobile/react-native-code-push",
+      "platforms": {
+        "ios": {
+          "podspecPath": "/Users/ngannguyenbao/ElectroGo/node_modules/@bravemobile/react-native-code-push/CodePush.podspec",
+          "version": "13.6.0",
+          "configurations": [],
+          "scriptPhases": []
+        },
+        "android": {
+          "sourceDir": "/Users/ngannguyenbao/ElectroGo/node_modules/@bravemobile/react-native-code-push/android",
+          "packageImportPath": "import com.microsoft.codepush.react.CodePush;",
+          "packageInstance": "CodePush.getInstance(getApplicationContext(), BuildConfig.DEBUG)",
+          "buildTypes": [],
+          "libraryName": "RNCodePushSpec",
+          "componentDescriptors": [],
+          "cmakeListsPath": "/Users/ngannguyenbao/ElectroGo/node_modules/@bravemobile/react-native-code-push/android/build/generated/source/codegen/jni/CMakeLists.txt",
+          "cxxModuleCMakeListsModuleName": null,
+          "cxxModuleCMakeListsPath": null,
+          "cxxModuleHeaderName": null,
+          "isPureCxxDependency": false
+        }
+      }
+    },
     "@react-native-firebase/app": {
       "root": "/Users/ngannguyenbao/ElectroGo/node_modules/@react-native-firebase/app",
       "name": "@react-native-firebase/app",

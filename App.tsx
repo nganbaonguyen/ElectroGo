@@ -8,6 +8,7 @@
 import React from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import RootNavigator from './src/app/RootNavigator';
+import {withOta} from './src/app/ota';
 import {initMonitoring} from './src/shared/monitoring/crashlytics';
 
 initMonitoring();
@@ -20,4 +21,5 @@ function App() {
   );
 }
 
-export default App;
+// Bản Release tự nhận cập nhật OTA (src/app/ota.tsx)
+export default withOta(App);

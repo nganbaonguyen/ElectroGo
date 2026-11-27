@@ -17,6 +17,8 @@ import {ProfileUser} from '../types';
 type Props = {
   user: ProfileUser;
   onClose: () => void;
+  /** Dòng phiên bản app ở cuối trang, ví dụ "Phiên bản 1.0 · Bản cập nhật 1.0.1" (host truyền vào). */
+  versionText?: string;
 };
 
 const BAR_HEIGHT = 52; // chiều cao thanh trên cùng (nút quay lại), chưa tính tai thỏ
@@ -27,7 +29,7 @@ const PULL_MAX = 150; // kéo xuống tối đa bao nhiêu thì avatar phóng to
  * Hồ sơ cá nhân (chỉ thông tin liên hệ). Hero xanh co lại thành thanh nhỏ có avatar khi cuộn lên,
  * và giãn theo khi kéo xuống nên không bao giờ lộ vùng trắng phía trên.
  */
-export default function ProfileScreen({user, onClose}: Props) {
+export default function ProfileScreen({user, onClose, versionText}: Props) {
   const insets = useSafeAreaInsets();
   const {height: windowHeight} = useWindowDimensions();
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -90,6 +92,7 @@ export default function ProfileScreen({user, onClose}: Props) {
             </View>
           ))}
         </View>
+        {versionText ? <Text style={styles.version}>{versionText}</Text> : null}
       </Animated.ScrollView>
 
       {/* Hero lớn: phủ lên nội dung, trượt cùng nội dung. Dải "fill" phía trên che vùng kéo giãn. */}
@@ -220,4 +223,5 @@ const styles = StyleSheet.create({
   contactDivider: {borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.background},
   contactLabel: {...typography.caption, color: colors.textSecondary},
   contactValue: {...typography.body, color: colors.textPrimary, marginTop: 2},
+  version: {...typography.caption, color: colors.textSecondary, textAlign: 'center', marginTop: spacing.xl},
 });
